@@ -1,4 +1,5 @@
 import os
+import random
 from PIL import Image
 import streamlit as st
 
@@ -68,20 +69,15 @@ if "stage" not in st.session_state:
 
 
 def generate_stage_parts():
-  import random
-
-  # 属性6個、他3個ずつ：計15個
+  # statの画像を廃止したため、ドロップ部品は attr(6), type(3), level(3) の計12個
   st.session_state.available_parts = {
       "attr": random.choices(ATTRIBUTES, k=6),
       "type": random.choices(WEAPON_TYPES, k=3),
       "level": random.choices(LEVELS, k=3),
-      "stat": random.choices(STATS, k=3),
   }
 
 
 def generate_enemies():
-  import random
-
   stage = st.session_state.stage
   enemies = []
   for i in range(3):
@@ -126,14 +122,15 @@ st.markdown("---")
 if st.session_state.phase == "generate":
   st.subheader("⚙️ 魔法陣構築・武器生成フェーズ")
   st.write(
-      "ドロップした15個の部品を組み合わせて、3つの円形魔法陣と武器を構築してください。"
+      "ドロップした部品を組み合わせて、3つの円形魔法陣と武器を構築してください。"
+      "（強化ステータスと上昇値は魔法陣起動時にランダムで決定されます）"
   )
 
   parts = st.session_state.available_parts
 
-  # ドロップ部品の一覧表示
+  # ドロップ部品の一覧表示（statを除外し、attr, type, levelのみ）
   st.markdown("#### 🎁 今回ドロップした魔法陣部品一覧")
-  c1, c2, c3, c4 = st.columns(4)
+  c1, c2, c3 = st.columns(3)
 
   with c1:
     st.markdown("**属性部品 (6個)**")
@@ -162,21 +159,12 @@ if st.session_state.phase == "generate":
       else:
         st.info(f"🌟 {l}")
 
-  with c4:
-    st.markdown("**ステータス部品 (3個)**")
-    for s in parts["stat"]:
-      img = load_image(f"images/stat_{s}.png")
-      if img:
-        st.image(img, width=35, caption=s)
-      else:
-        st.info(f"📈 {s}")
-
   st.markdown("---")
   st.subheader("🌀 円形魔法陣の構築と武器プレビュー")
 
   col_w1, col_w2, col_w3 = st.columns(3)
 
-  # 共通の構築入力関数
+
   def render_magic_slot(slot_num):
     st.markdown(
         f"<div class='magic-slot'><h5>🔮 魔法陣スロット #{slot_num}</h5>",
@@ -186,18 +174,14 @@ if st.session_state.phase == "generate":
     a1 = st.selectbox("属性 1 (コア)", ATTRIBUTES, key=f"w{slot_num}_a1")
     a2 = st.selectbox("属性 2 (コア)", ATTRIBUTES, key=f"w{slot_num}_a2")
 
-    st.markdown(
-        "<b>【外周リング】武器・レベル・強化</b>", unsafe_allow_html=True
-    )
+    st.markdown("<b>【外周リング】武器・レベル</b>", unsafe_allow_html=True)
     w_type = st.selectbox("武器種", WEAPON_TYPES, key=f"w{slot_num}_t")
     w_lvl = st.selectbox("レベル", LEVELS, key=f"w{slot_num}_l")
-    w_stat = st.selectbox("強化ステータス", STATS, key=f"w{slot_num}_s")
 
     # プレビュー表示（魔法陣の完成形 ＆ 武器画像）
     st.markdown("---")
     p_col1, p_col2 = st.columns(2)
     with p_col1:
-      # 完成形魔法陣画像（共通ベースまたは属性別画像）
       circle_img_path = f"images/magic_circle_{a1}_{a2}.png"
       if not os.path.exists(circle_img_path):
         circle_img_path = "images/magic_circle_base.png"
@@ -208,7 +192,6 @@ if st.session_state.phase == "generate":
         st.write("🌐 [魔法陣陣形]")
 
     with p_col2:
-      # 武器画像
       weapon_img_path = f"images/weapon_{w_type}_{w_lvl}.png"
       w_img = load_image(weapon_img_path, width=70)
       if w_img:
@@ -217,28 +200,47 @@ if st.session_state.phase == "generate":
         st.write(f"⚔️ {w_lvl}{w_type}")
 
     st.markdown("</div>", unsafe_allow_html=True)
+
+    # 武器生成時にランダムなステータスと上昇値を決定するためのプレースホルダー（確定前）
     return {
-        "name": f"{a1}・{a2}の{w_lvl}{w_type}",
+        "a1": a1,
+        "a2": a2,
         "type": w_type,
         "level": w_lvl,
-        "stat": w_stat,
-        "value": int(15 * LEVEL_MULTIPLIERS[w_lvl]),
         "circle_img": circle_img_path,
         "weapon_img": weapon_img_path,
     }
 
+
   with col_w1:
-    w1 = render_magic_slot(1)
+    raw_w1 = render_magic_slot(1)
   with col_w2:
-    w2 = render_magic_slot(2)
+    raw_w2 = render_magic_slot(2)
   with col_w3:
-    w3 = render_magic_slot(3)
+    raw_w3 = render_magic_slot(3)
 
   st.markdown("<br>", unsafe_allow_html=True)
   if st.button(
       "✨ 3つの魔法陣を起動し、武器を生成して装備フェーズへ", type="primary"
   ):
-    st.session_state.crafted_weapons = [w1, w2, w3]
+    crafted = []
+    for raw in [raw_w1, raw_w2, raw_w3]:
+      # ランダムにステータスを決定し、レベルに応じた倍率で上昇値をランダム算出
+      rand_stat = random.choice(STATS)
+      base_val = random.randint(5, 15)
+      val = int(base_val * LEVEL_MULTIPLIERS[raw["level"]])
+
+      crafted.append({
+          "name": f"{raw['a1']}・{raw['a2']}の{raw['level']}{raw['type']}",
+          "type": raw["type"],
+          "level": raw["level"],
+          "stat": rand_stat,
+          "value": val,
+          "circle_img": raw["circle_img"],
+          "weapon_img": raw["weapon_img"],
+      })
+
+    st.session_state.crafted_weapons = crafted
     st.session_state.phase = "equip"
     st.rerun()
 
@@ -276,7 +278,6 @@ elif st.session_state.phase == "equip":
       chosen_weapon = weapon_options[selected_w_name]
       assigned_weapons.append(chosen_weapon)
 
-      # 魔法陣と武器の画像を並べて表示
       img_col1, img_col2 = st.columns(2)
       with img_col1:
         c_img = load_image(chosen_weapon["circle_img"], width=50)
@@ -287,7 +288,10 @@ elif st.session_state.phase == "equip":
         if w_img:
           st.image(w_img, width=50, caption="武器")
 
-      st.markdown(f"<small><b>{chosen_weapon['name']}</b></small>", unsafe_allow_html=True)
+      st.markdown(
+          f"<small><b>{chosen_weapon['name']}</b><br>🔮効果: {chosen_weapon['stat']} +{chosen_weapon['value']}</small>",
+          unsafe_allow_html=True,
+      )
       st.markdown("</div>", unsafe_allow_html=True)
 
   if st.button("🚀 バトルフェーズへ突入！", type="primary"):
@@ -340,7 +344,10 @@ elif st.session_state.phase == "battle":
         if w_img:
           st.image(w_img, width=30, caption="武")
       with pc4:
-        st.markdown(f"**{p['name']}**<br><small>{w['name']}</small>", unsafe_allow_html=True)
+        st.markdown(
+            f"**{p['name']}**<br><small>{w['name']} ({w['stat']}+{w['value']})</small>",
+            unsafe_allow_html=True,
+        )
         st.progress(
             hp_ratio, text=f"HP: {max(0, p['hp'])} / {p['max_hp']}"
         )
@@ -372,8 +379,6 @@ elif st.session_state.phase == "battle":
   st.markdown("---")
 
   if st.button("⚔️ ターン進行 (攻撃＆回復)", type="primary"):
-    import random
-
     logs = []
     for p in st.session_state.players:
       if p["hp"] > 0:
