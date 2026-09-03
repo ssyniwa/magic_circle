@@ -71,7 +71,6 @@ if "stage" not in st.session_state:
 def generate_stage_parts():
   import random
 
-  # 各ステージでドロップする魔法陣部品（属性6個、他3個ずつ：計15個）
   st.session_state.available_parts = {
       "attr": random.choices(ATTRIBUTES, k=6),
       "type": random.choices(WEAPON_TYPES, k=3),
@@ -126,12 +125,11 @@ st.markdown("---")
 if st.session_state.phase == "generate":
   st.subheader("⚙️ 魔法陣構築・武器生成フェーズ")
   st.write(
-      "今ステージでドロップした15個の魔法陣部品を確認し、3つの強力な武器を構築してください。"
+      "ドロップした15個の魔法陣部品を確認し、3つの強力な武器を構築してください。"
   )
 
   parts = st.session_state.available_parts
 
-  # ドロップ部品の視覚的表示
   st.markdown("#### 🎁 今回ドロップした魔法陣部品一覧")
   c1, c2, c3, c4 = st.columns(4)
 
@@ -142,7 +140,7 @@ if st.session_state.phase == "generate":
       if img:
         st.image(img, width=40, caption=a)
       else:
-        st.info(f"✨ 属性: {a}")
+        st.info(f"✨ {a}")
 
   with c2:
     st.markdown("**武器種部品 (3個)**")
@@ -151,7 +149,7 @@ if st.session_state.phase == "generate":
       if img:
         st.image(img, width=40, caption=t)
       else:
-        st.info(f"⚔️ 武器種: {t}")
+        st.info(f"⚔️ {t}")
 
   with c3:
     st.markdown("**レベル部品 (3個)**")
@@ -160,16 +158,16 @@ if st.session_state.phase == "generate":
       if img:
         st.image(img, width=40, caption=l)
       else:
-        st.info(f"🌟 レベル: {l}")
+        st.info(f"🌟 {l}")
 
   with c4:
-    st.markdown("**ステータス強化部品 (3個)**")
+    st.markdown("**ステータス部品 (3個)**")
     for s in parts["stat"]:
       img = load_image(f"images/stat_{s}.png")
       if img:
         st.image(img, width=40, caption=s)
       else:
-        st.info(f"📈 強化: {s}")
+        st.info(f"📈 {s}")
 
   st.markdown("---")
   st.subheader("🛠️ 魔法陣の組み合わせによる武器のクラフト")
@@ -183,6 +181,11 @@ if st.session_state.phase == "generate":
     w1_type = st.selectbox("武器種", WEAPON_TYPES, key="w1_t")
     w1_lvl = st.selectbox("レベル", LEVELS, key="w1_l")
     w1_stat = st.selectbox("強化ステータス", STATS, key="w1_s")
+    # プレビュー画像表示
+    w1_img_path = f"images/weapon_{w1_type}_{w1_lvl}.png"
+    img1 = load_image(w1_img_path, width=70)
+    if img1:
+      st.image(img1, width=70, caption="生成予定武器")
 
   with col_w2:
     st.markdown("##### 武器 2")
@@ -191,6 +194,10 @@ if st.session_state.phase == "generate":
     w2_type = st.selectbox("武器種", WEAPON_TYPES, key="w2_t")
     w2_lvl = st.selectbox("レベル", LEVELS, key="w2_l")
     w2_stat = st.selectbox("強化ステータス", STATS, key="w2_s")
+    w2_img_path = f"images/weapon_{w2_type}_{w2_lvl}.png"
+    img2 = load_image(w2_img_path, width=70)
+    if img2:
+      st.image(img2, width=70, caption="生成予定武器")
 
   with col_w3:
     st.markdown("##### 武器 3")
@@ -199,27 +206,37 @@ if st.session_state.phase == "generate":
     w3_type = st.selectbox("武器種", WEAPON_TYPES, key="w3_t")
     w3_lvl = st.selectbox("レベル", LEVELS, key="w3_l")
     w3_stat = st.selectbox("強化ステータス", STATS, key="w3_s")
+    w3_img_path = f"images/weapon_{w3_type}_{w3_lvl}.png"
+    img3 = load_image(w3_img_path, width=70)
+    if img3:
+      st.image(img3, width=70, caption="生成予定武器")
 
   st.markdown("<br>", unsafe_allow_html=True)
   if st.button("✨ 武器を生成して装備フェーズへ進む", type="primary"):
     st.session_state.crafted_weapons = [
         {
             "name": f"{w1_a1}・{w1_a2}の{w1_lvl}{w1_type}",
+            "type": w1_type,
             "level": w1_lvl,
             "stat": w1_stat,
             "value": int(15 * LEVEL_MULTIPLIERS[w1_lvl]),
+            "img": f"images/weapon_{w1_type}_{w1_lvl}.png",
         },
         {
             "name": f"{w2_a1}・{w2_a2}の{w2_lvl}{w2_type}",
+            "type": w2_type,
             "level": w2_lvl,
             "stat": w2_stat,
             "value": int(15 * LEVEL_MULTIPLIERS[w2_lvl]),
+            "img": f"images/weapon_{w2_type}_{w2_lvl}.png",
         },
         {
             "name": f"{w3_a1}・{w3_a2}の{w3_lvl}{w3_type}",
+            "type": w3_type,
             "level": w3_lvl,
             "stat": w3_stat,
             "value": int(15 * LEVEL_MULTIPLIERS[w3_lvl]),
+            "img": f"images/weapon_{w3_type}_{w3_lvl}.png",
         },
     ]
     st.session_state.phase = "equip"
@@ -230,7 +247,7 @@ if st.session_state.phase == "generate":
 # ==========================================
 elif st.session_state.phase == "equip":
   st.subheader("🛡️ キャラクター装備フェーズ")
-  st.write("作成した3つの武器を、味方パーティーの3人に割り当てます。")
+  st.write("作成した3つの武器を味方パーティーの3人に割り当てます。")
 
   weapons = st.session_state.crafted_weapons
   weapon_options = {w["name"]: w for w in weapons}
@@ -242,27 +259,34 @@ elif st.session_state.phase == "equip":
   for idx, p in enumerate(st.session_state.players):
     with cols[idx]:
       st.markdown(f"<div class='card'>", unsafe_allow_html=True)
-      img = load_image(p["img"], width=100)
-      if img:
-        st.image(img, width=100)
+      p_img = load_image(p["img"], width=90)
+      if p_img:
+        st.image(p_img, width=90)
       else:
         st.markdown(f"### 🛡️ {p['name']}")
 
       st.write(
-          f"初期ステータス: ⚔️ATK {p['atk']} / 🛡️DEF {p['def']} / 💖REC"
-          f" {p['rec']}"
+          f"ATK: {p['atk']} / DEF: {p['def']} / REC: {p['rec']}"
       )
       selected_w_name = st.selectbox(
           f"装備武器選択", w_names, key=f"equip_{idx}"
       )
-      assigned_weapons.append(weapon_options[selected_w_name])
+      chosen_weapon = weapon_options[selected_w_name]
+      assigned_weapons.append(chosen_weapon)
+
+      # 選択中武器の画像表示
+      w_img = load_image(chosen_weapon["img"], width=60)
+      if w_img:
+        st.image(w_img, width=60, caption=chosen_weapon["name"])
+      else:
+        st.caption(f"武器: {chosen_weapon['name']}")
+
       st.markdown("</div>", unsafe_allow_html=True)
 
   if st.button("🚀 バトルフェーズへ突入！", type="primary"):
     for i, p in enumerate(st.session_state.players):
       w = assigned_weapons[i]
       p["weapon"] = w
-      # 武器補正の適用
       if w["stat"] == "HP":
         p["max_hp"] += w["value"] * 4
         p["hp"] = p["max_hp"]
@@ -289,21 +313,25 @@ elif st.session_state.phase == "battle":
   with col_p:
     st.markdown("### 🔵 プレイヤーチーム")
     for p in st.session_state.players:
-      p_img = load_image(p["img"], width=60)
+      p_img = load_image(p["img"], width=50)
       hp_ratio = max(0, min(1, p["hp"] / p["max_hp"]))
-      w_name = p["weapon"]["name"] if p["weapon"] else "なし"
+      w = p["weapon"]
+      w_img = load_image(w["img"], width=30) if w else None
 
       st.markdown(f"<div class='card'>", unsafe_allow_html=True)
-      pc1, pc2 = st.columns([1, 3])
+      pc1, pc2, pc3 = st.columns([1, 1, 2])
       with pc1:
         if p_img:
-          st.image(p_img, width=60)
+          st.image(p_img, width=50)
         else:
           st.write("👤")
       with pc2:
-        st.markdown(
-            f"**{p['name']}** <br>武器: <i>{w_name}</i>", unsafe_allow_html=True
-        )
+        if w_img:
+          st.image(w_img, width=35, caption="装備中")
+        else:
+          st.write("⚔️")
+      with pc3:
+        st.markdown(f"**{p['name']}**<br><small>{w['name']}</small>", unsafe_allow_html=True)
         st.progress(
             hp_ratio, text=f"HP: {max(0, p['hp'])} / {p['max_hp']}"
         )
@@ -312,14 +340,14 @@ elif st.session_state.phase == "battle":
   with col_e:
     st.markdown("### 🔴 エネミーチーム")
     for e in st.session_state.enemies:
-      e_img = load_image(e["img"], width=60)
+      e_img = load_image(e["img"], width=50)
       hp_ratio = max(0, min(1, e["hp"] / e["max_hp"]))
 
       st.markdown(f"<div class='card'>", unsafe_allow_html=True)
       ec1, ec2 = st.columns([1, 3])
       with ec1:
         if e_img:
-          st.image(e_img, width=60)
+          st.image(e_img, width=50)
         else:
           st.write("👾")
       with ec2:
@@ -334,13 +362,10 @@ elif st.session_state.phase == "battle":
 
   st.markdown("---")
 
-  # ターン進行ボタン
   if st.button("⚔️ ターン進行 (攻撃＆回復)", type="primary"):
     import random
 
     logs = []
-
-    # 1. プレイヤー側の攻撃
     for p in st.session_state.players:
       if p["hp"] > 0:
         living_enemies = [e for e in st.session_state.enemies if e["hp"] > 0]
@@ -350,7 +375,6 @@ elif st.session_state.phase == "battle":
           target["hp"] = max(0, target["hp"] - dmg)
           logs.append(f"🟢 {p['name']} の攻撃！ {target['name']} に {dmg} のダメージ！")
 
-    # 2. 敵側の攻撃
     for e in st.session_state.enemies:
       if e["hp"] > 0:
         living_players = [pl for pl in st.session_state.players if pl["hp"] > 0]
@@ -360,7 +384,6 @@ elif st.session_state.phase == "battle":
           target["hp"] = max(0, target["hp"] - dmg)
           logs.append(f"🔴 {e['name']} の反撃！ {target['name']} に {dmg} のダメージ！")
 
-    # 3. 回復行動
     for p in st.session_state.players:
       if p["hp"] > 0 and p["rec"] > 0:
         living_players = [pl for pl in st.session_state.players if pl["hp"] > 0]
@@ -375,7 +398,6 @@ elif st.session_state.phase == "battle":
 
     st.session_state.battle_log.extend(logs)
 
-    # 勝敗・進行判定
     all_enemies_dead = all(e["hp"] <= 0 for e in st.session_state.enemies)
     all_players_dead = all(p["hp"] <= 0 for p in st.session_state.players)
 
@@ -386,7 +408,6 @@ elif st.session_state.phase == "battle":
         st.session_state.stage += 1
         st.session_state.phase = "generate"
         st.session_state.available_parts = {}
-        # 次のステージに備えて全快
         for p in st.session_state.players:
           p["hp"] = p["max_hp"]
       st.rerun()
@@ -394,7 +415,6 @@ elif st.session_state.phase == "battle":
       st.session_state.phase = "gameover"
       st.rerun()
 
-  # バトルログ表示
   st.markdown("### 📜 戦闘ログ")
   log_container = st.container(height=200)
   with log_container:
