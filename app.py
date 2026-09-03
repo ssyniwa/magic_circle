@@ -1,23 +1,66 @@
-import random
+import os
+from PIL import Image
 import streamlit as st
 
-st.set_page_config(page_title="魔法陣武器生成 RPG", layout="centered")
+# ページ基本設定
+st.set_page_config(
+    page_title="魔法陣構築 RPG App", page_icon="🔮", layout="wide"
+)
 
 # 定数定義
 ATTRIBUTES = ["炎", "水", "風", "地", "光", "闇"]
 WEAPON_TYPES = ["剣", "杖", "弓", "盾", "槍"]
 LEVELS = ["初級", "中級", "上級", "王級", "神級"]
-LEVEL_MULTIPLIERS = {"初級": 1, "中級": 1.5, "上級": 2.2, "王級": 3.0, "神級": 4.5}
+LEVEL_MULTIPLIERS = {"初級": 1.0, "中級": 1.5, "上級": 2.2, "王級": 3.0, "神級": 4.5}
 STATS = ["HP", "攻撃力", "防御力", "回復力"]
+
+
+# 画像読み込み補助関数
+def load_image(path, width=80):
+  if os.path.exists(path):
+    try:
+      img = Image.open(path)
+      return img
+    except Exception:
+      pass
+  return None
+
 
 # セッション状態の初期化
 if "stage" not in st.session_state:
   st.session_state.stage = 1
   st.session_state.phase = "generate"  # generate, equip, battle, gameover, clear
   st.session_state.players = [
-      {"name": "戦士アレン", "hp": 120, "max_hp": 120, "atk": 25, "def": 15, "rec": 5, "weapon": None},
-      {"name": "魔導士リリア", "hp": 90, "max_hp": 90, "atk": 30, "def": 8, "rec": 20, "weapon": None},
-      {"name": "騎士レオン", "hp": 150, "max_hp": 150, "atk": 18, "def": 25, "rec": 10, "weapon": None},
+      {
+          "name": "戦士アレン",
+          "hp": 120,
+          "max_hp": 120,
+          "atk": 25,
+          "def": 15,
+          "rec": 5,
+          "weapon": None,
+          "img": "images/player_アレン.png",
+      },
+      {
+          "name": "魔導士リリア",
+          "hp": 90,
+          "max_hp": 90,
+          "atk": 30,
+          "def": 8,
+          "rec": 20,
+          "weapon": None,
+          "img": "images/player_リリア.png",
+      },
+      {
+          "name": "騎士レオン",
+          "hp": 150,
+          "max_hp": 150,
+          "atk": 18,
+          "def": 25,
+          "rec": 10,
+          "weapon": None,
+          "img": "images/player_レオン.png",
+      },
   ]
   st.session_state.enemies = []
   st.session_state.available_parts = {}
@@ -26,26 +69,31 @@ if "stage" not in st.session_state:
 
 
 def generate_stage_parts():
-  # ステージに応じた部品のドロップ生成
+  import random
+
+  # 各ステージでドロップする魔法陣部品（属性6個、他3個ずつ：計15個）
   st.session_state.available_parts = {
       "attr": random.choices(ATTRIBUTES, k=6),
-      "type": random.choices(WEAPON_TYPES, k=4),
-      "level": random.choices(LEVELS, k=4),
-      "stat": random.choices(STATS, k=4),
+      "type": random.choices(WEAPON_TYPES, k=3),
+      "level": random.choices(LEVELS, k=3),
+      "stat": random.choices(STATS, k=3),
   }
 
 
 def generate_enemies():
+  import random
+
   stage = st.session_state.stage
   enemies = []
   for i in range(3):
-    e_hp = 60 + stage * 25
+    e_hp = 70 + stage * 30
     enemies.append({
         "name": f"魔物 Lv.{stage}-{i+1}",
         "hp": e_hp,
         "max_hp": e_hp,
-        "atk": 15 + stage * 5,
-        "def": 5 + stage * 2,
+        "atk": 18 + stage * 5,
+        "def": 6 + stage * 2,
+        "img": f"images/enemy_boss.png",
     })
   st.session_state.enemies = enemies
 
@@ -53,95 +101,170 @@ def generate_enemies():
 if not st.session_state.available_parts and st.session_state.phase == "generate":
   generate_stage_parts()
 
-st.title(f"魔法陣構築 RPG (ステージ {st.session_state.stage} / 10)")
+# --- UI デザイン・カスタムCSS ---
+st.markdown(
+    """
+    <style>
+    .main-title { text-align: center; color: #6C63FF; font-family: 'Helvetica', sans-serif; }
+    .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; }
+    .card { background-color: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #dee2e6; margin-bottom: 10px; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-# フェーズ1: 武器生成フェーズ
+st.markdown(
+    f"<h1 class='main-title'>🔮 魔法陣構築 RPG (ステージ {st.session_state.stage} /"
+    " 10)</h1>",
+    unsafe_allow_html=True,
+)
+st.markdown("---")
+
+# ==========================================
+# フェーズ 1: 武器生成フェーズ
+# ==========================================
 if st.session_state.phase == "generate":
   st.subheader("⚙️ 魔法陣構築・武器生成フェーズ")
-  st.write("ドロップした部品を組み合わせて、3つの武器を作成してください。")
+  st.write(
+      "今ステージでドロップした15個の魔法陣部品を確認し、3つの強力な武器を構築してください。"
+  )
 
   parts = st.session_state.available_parts
-  st.write(f"利用可能な属性: {', '.join(parts['attr'])}")
-  st.write(f"利用可能な武器種: {', '.join(parts['type'])}")
-  st.write(f"利用可能なレベル: {', '.join(parts['level'])}")
-  st.write(f"利用可能な強化ステータス: {', '.join(parts['stat'])}")
+
+  # ドロップ部品の視覚的表示
+  st.markdown("#### 🎁 今回ドロップした魔法陣部品一覧")
+  c1, c2, c3, c4 = st.columns(4)
+
+  with c1:
+    st.markdown("**属性部品 (6個)**")
+    for a in parts["attr"]:
+      img = load_image(f"images/attr_{a}.png")
+      if img:
+        st.image(img, width=40, caption=a)
+      else:
+        st.info(f"✨ 属性: {a}")
+
+  with c2:
+    st.markdown("**武器種部品 (3個)**")
+    for t in parts["type"]:
+      img = load_image(f"images/type_{t}.png")
+      if img:
+        st.image(img, width=40, caption=t)
+      else:
+        st.info(f"⚔️ 武器種: {t}")
+
+  with c3:
+    st.markdown("**レベル部品 (3個)**")
+    for l in parts["level"]:
+      img = load_image(f"images/level_{l}.png")
+      if img:
+        st.image(img, width=40, caption=l)
+      else:
+        st.info(f"🌟 レベル: {l}")
+
+  with c4:
+    st.markdown("**ステータス強化部品 (3個)**")
+    for s in parts["stat"]:
+      img = load_image(f"images/stat_{s}.png")
+      if img:
+        st.image(img, width=40, caption=s)
+      else:
+        st.info(f"📈 強化: {s}")
 
   st.markdown("---")
-  st.write("### 武器 1 の構築")
-  w1_attr1 = st.selectbox("属性1 (コア)", ATTRIBUTES, key="w1_a1")
-  w1_attr2 = st.selectbox("属性2 (コア)", ATTRIBUTES, key="w1_a2")
-  w1_type = st.selectbox("武器種", WEAPON_TYPES, key="w1_t")
-  w1_lvl = st.selectbox("レベル", LEVELS, key="w1_l")
-  w1_stat = st.selectbox("強化ステータス", STATS, key="w1_s")
+  st.subheader("🛠️ 魔法陣の組み合わせによる武器のクラフト")
 
-  st.write("### 武器 2 の構築")
-  w2_attr1 = st.selectbox("属性1 (コア)", ATTRIBUTES, key="w2_a1")
-  w2_attr2 = st.selectbox("属性2 (コア)", ATTRIBUTES, key="w2_a2")
-  w2_type = st.selectbox("武器種", WEAPON_TYPES, key="w2_t")
-  w2_lvl = st.selectbox("レベル", LEVELS, key="w2_l")
-  w2_stat = st.selectbox("強化ステータス", STATS, key="w2_s")
+  col_w1, col_w2, col_w3 = st.columns(3)
 
-  st.write("### 武器 3 の構築")
-  w3_attr1 = st.selectbox("属性1 (コア)", ATTRIBUTES, key="w3_a1")
-  w3_attr2 = st.selectbox("属性2 (コア)", ATTRIBUTES, key="w3_a2")
-  w3_type = st.selectbox("武器種", WEAPON_TYPES, key="w3_t")
-  w3_lvl = st.selectbox("レベル", LEVELS, key="w3_l")
-  w3_stat = st.selectbox("強化ステータス", STATS, key="w3_s")
+  with col_w1:
+    st.markdown("##### 武器 1")
+    w1_a1 = st.selectbox("属性1 (コア)", ATTRIBUTES, key="w1_a1")
+    w1_a2 = st.selectbox("属性2 (コア)", ATTRIBUTES, key="w1_a2")
+    w1_type = st.selectbox("武器種", WEAPON_TYPES, key="w1_t")
+    w1_lvl = st.selectbox("レベル", LEVELS, key="w1_l")
+    w1_stat = st.selectbox("強化ステータス", STATS, key="w1_s")
 
-  if st.button("武器を生成して装備フェーズへ進む"):
+  with col_w2:
+    st.markdown("##### 武器 2")
+    w2_a1 = st.selectbox("属性1 (コア)", ATTRIBUTES, key="w2_a1")
+    w2_a2 = st.selectbox("属性2 (コア)", ATTRIBUTES, key="w2_a2")
+    w2_type = st.selectbox("武器種", WEAPON_TYPES, key="w2_t")
+    w2_lvl = st.selectbox("レベル", LEVELS, key="w2_l")
+    w2_stat = st.selectbox("強化ステータス", STATS, key="w2_s")
+
+  with col_w3:
+    st.markdown("##### 武器 3")
+    w3_a1 = st.selectbox("属性1 (コア)", ATTRIBUTES, key="w3_a1")
+    w3_a2 = st.selectbox("属性2 (コア)", ATTRIBUTES, key="w3_a2")
+    w3_type = st.selectbox("武器種", WEAPON_TYPES, key="w3_t")
+    w3_lvl = st.selectbox("レベル", LEVELS, key="w3_l")
+    w3_stat = st.selectbox("強化ステータス", STATS, key="w3_s")
+
+  st.markdown("<br>", unsafe_allow_html=True)
+  if st.button("✨ 武器を生成して装備フェーズへ進む", type="primary"):
     st.session_state.crafted_weapons = [
         {
-            "name": f"{w1_attr1}・{w1_attr2}の{w1_lvl}{w1_type}",
-            "attr": [w1_attr1, w1_attr2],
-            "type": w1_type,
+            "name": f"{w1_a1}・{w1_a2}の{w1_lvl}{w1_type}",
             "level": w1_lvl,
             "stat": w1_stat,
-            "value": int(10 * LEVEL_MULTIPLIERS[w1_lvl]),
+            "value": int(15 * LEVEL_MULTIPLIERS[w1_lvl]),
         },
         {
-            "name": f"{w2_attr1}・{w2_attr2}の{w2_lvl}{w2_type}",
-            "attr": [w2_attr1, w2_attr2],
-            "type": w2_type,
+            "name": f"{w2_a1}・{w2_a2}の{w2_lvl}{w2_type}",
             "level": w2_lvl,
             "stat": w2_stat,
-            "value": int(10 * LEVEL_MULTIPLIERS[w2_lvl]),
+            "value": int(15 * LEVEL_MULTIPLIERS[w2_lvl]),
         },
         {
-            "name": f"{w3_attr1}・{w3_attr2}の{w3_lvl}{w3_type}",
-            "attr": [w3_attr1, w3_attr2],
-            "type": w3_type,
+            "name": f"{w3_a1}・{w3_a2}の{w3_lvl}{w3_type}",
             "level": w3_lvl,
             "stat": w3_stat,
-            "value": int(10 * LEVEL_MULTIPLIERS[w3_lvl]),
+            "value": int(15 * LEVEL_MULTIPLIERS[w3_lvl]),
         },
     ]
     st.session_state.phase = "equip"
     st.rerun()
 
-# フェーズ2: 装備フェーズ
+# ==========================================
+# フェーズ 2: 装備フェーズ
+# ==========================================
 elif st.session_state.phase == "equip":
-  st.subheader("🛡️ 装備フェーズ")
-  st.write("作成した3つの武器を3人のキャラクターに割り当ててください。")
+  st.subheader("🛡️ キャラクター装備フェーズ")
+  st.write("作成した3つの武器を、味方パーティーの3人に割り当てます。")
 
   weapons = st.session_state.crafted_weapons
   weapon_options = {w["name"]: w for w in weapons}
   w_names = list(weapon_options.keys())
 
+  cols = st.columns(3)
   assigned_weapons = []
-  for idx, p in enumerate(st.session_state.players):
-    selected_w_name = st.selectbox(
-        f"{p['name']} の装備武器", w_names, key=f"equip_{idx}"
-    )
-    assigned_weapons.append(weapon_options[selected_w_name])
 
-  if st.button("バトルフェーズへ進む"):
-    # 武器を装備し、ステータスに反映
+  for idx, p in enumerate(st.session_state.players):
+    with cols[idx]:
+      st.markdown(f"<div class='card'>", unsafe_allow_html=True)
+      img = load_image(p["img"], width=100)
+      if img:
+        st.image(img, width=100)
+      else:
+        st.markdown(f"### 🛡️ {p['name']}")
+
+      st.write(
+          f"初期ステータス: ⚔️ATK {p['atk']} / 🛡️DEF {p['def']} / 💖REC"
+          f" {p['rec']}"
+      )
+      selected_w_name = st.selectbox(
+          f"装備武器選択", w_names, key=f"equip_{idx}"
+      )
+      assigned_weapons.append(weapon_options[selected_w_name])
+      st.markdown("</div>", unsafe_allow_html=True)
+
+  if st.button("🚀 バトルフェーズへ突入！", type="primary"):
     for i, p in enumerate(st.session_state.players):
       w = assigned_weapons[i]
       p["weapon"] = w
-      # ステータス一時強化の適用 (HPは上限も上げる)
+      # 武器補正の適用
       if w["stat"] == "HP":
-        p["max_hp"] += w["value"] * 3
+        p["max_hp"] += w["value"] * 4
         p["hp"] = p["max_hp"]
       elif w["stat"] == "攻撃力":
         p["atk"] += w["value"]
@@ -152,56 +275,92 @@ elif st.session_state.phase == "equip":
 
     generate_enemies()
     st.session_state.phase = "battle"
-    st.session_state.battle_log = ["バトル開始！"]
+    st.session_state.battle_log = ["⚔️ バトルが開始されました！"]
     st.rerun()
 
-# フェーズ3: バトルフェーズ
+# ==========================================
+# フェーズ 3: バトルフェーズ (3対3)
+# ==========================================
 elif st.session_state.phase == "battle":
-  st.subheader("⚔️ バトルフェーズ (3 vs 3)")
+  st.subheader("⚔️ 3対3 バトルフェーズ")
 
-  col1, col2 = st.columns(2)
-  with col1:
-    st.write("### プレイヤーチーム")
+  col_p, col_e = st.columns(2)
+
+  with col_p:
+    st.markdown("### 🔵 プレイヤーチーム")
     for p in st.session_state.players:
+      p_img = load_image(p["img"], width=60)
+      hp_ratio = max(0, min(1, p["hp"] / p["max_hp"]))
       w_name = p["weapon"]["name"] if p["weapon"] else "なし"
-      st.markdown(
-          f"- **{p['name']}** (HP: {p['hp']}/{p['max_hp']})<br><small>武器: {w_name}</small>",
-          unsafe_allow_html=True,
-      )
 
-  with col2:
-    st.write("### 敵チーム")
+      st.markdown(f"<div class='card'>", unsafe_allow_html=True)
+      pc1, pc2 = st.columns([1, 3])
+      with pc1:
+        if p_img:
+          st.image(p_img, width=60)
+        else:
+          st.write("👤")
+      with pc2:
+        st.markdown(
+            f"**{p['name']}** <br>武器: <i>{w_name}</i>", unsafe_allow_html=True
+        )
+        st.progress(
+            hp_ratio, text=f"HP: {max(0, p['hp'])} / {p['max_hp']}"
+        )
+      st.markdown("</div>", unsafe_allow_html=True)
+
+  with col_e:
+    st.markdown("### 🔴 エネミーチーム")
     for e in st.session_state.enemies:
-      if e["hp"] > 0:
-        st.write(f"- {e['name']} (HP: {e['hp']}/{e['max_hp']})")
-      else:
-        st.write(f"- ~~{e['name']}~~ (戦闘不能)")
+      e_img = load_image(e["img"], width=60)
+      hp_ratio = max(0, min(1, e["hp"] / e["max_hp"]))
+
+      st.markdown(f"<div class='card'>", unsafe_allow_html=True)
+      ec1, ec2 = st.columns([1, 3])
+      with ec1:
+        if e_img:
+          st.image(e_img, width=60)
+        else:
+          st.write("👾")
+      with ec2:
+        if e["hp"] > 0:
+          st.markdown(f"**{e['name']}**")
+          st.progress(
+              hp_ratio, text=f"HP: {max(0, e['hp'])} / {e['max_hp']}"
+          )
+        else:
+          st.markdown(f"~~{e['name']}~~ **【戦闘不能】**")
+      st.markdown("</div>", unsafe_allow_html=True)
 
   st.markdown("---")
 
-  if st.button("ターンを進める (攻撃実行)"):
+  # ターン進行ボタン
+  if st.button("⚔️ ターン進行 (攻撃＆回復)", type="primary"):
+    import random
+
     logs = []
-    # プレイヤーの攻撃
+
+    # 1. プレイヤー側の攻撃
     for p in st.session_state.players:
       if p["hp"] > 0:
         living_enemies = [e for e in st.session_state.enemies if e["hp"] > 0]
         if living_enemies:
           target = random.choice(living_enemies)
-          dmg = max(5, p["atk"] - target["def"] // 2)
+          dmg = max(5, p["atk"] - target["def"] // 3)
           target["hp"] = max(0, target["hp"] - dmg)
-          logs.append(f"{p['name']} の攻撃！ {target['name']} に {dmg} のダメージ！")
+          logs.append(f"🟢 {p['name']} の攻撃！ {target['name']} に {dmg} のダメージ！")
 
-    # 敵の攻撃
+    # 2. 敵側の攻撃
     for e in st.session_state.enemies:
       if e["hp"] > 0:
         living_players = [pl for pl in st.session_state.players if pl["hp"] > 0]
         if living_players:
           target = random.choice(living_players)
-          dmg = max(3, e["atk"] - target["def"] // 2)
+          dmg = max(4, e["atk"] - target["def"] // 3)
           target["hp"] = max(0, target["hp"] - dmg)
-          logs.append(f"{e['name']} の攻撃！ {target['name']} に {dmg} のダメージ！")
+          logs.append(f"🔴 {e['name']} の反撃！ {target['name']} に {dmg} のダメージ！")
 
-    # 回復行動
+    # 3. 回復行動
     for p in st.session_state.players:
       if p["hp"] > 0 and p["rec"] > 0:
         living_players = [pl for pl in st.session_state.players if pl["hp"] > 0]
@@ -210,13 +369,13 @@ elif st.session_state.phase == "battle":
           heal = p["rec"]
           target["hp"] = min(target["max_hp"], target["hp"] + heal)
           logs.append(
-              f"{p['name']} のスキル発動！ {target['name']} のHPが {heal}"
+              f"✨ {p['name']} の治癒スキル！ {target['name']} のHPが {heal}"
               " 回復した！"
           )
 
     st.session_state.battle_log.extend(logs)
 
-    # 勝敗判定
+    # 勝敗・進行判定
     all_enemies_dead = all(e["hp"] <= 0 for e in st.session_state.enemies)
     all_players_dead = all(p["hp"] <= 0 for p in st.session_state.players)
 
@@ -227,7 +386,7 @@ elif st.session_state.phase == "battle":
         st.session_state.stage += 1
         st.session_state.phase = "generate"
         st.session_state.available_parts = {}
-        # 次のステージに向けてHP回復
+        # 次のステージに備えて全快
         for p in st.session_state.players:
           p["hp"] = p["max_hp"]
       st.rerun()
@@ -235,20 +394,32 @@ elif st.session_state.phase == "battle":
       st.session_state.phase = "gameover"
       st.rerun()
 
-  st.write("### 戦闘ログ")
-  for log in reversed(st.session_state.battle_log[-6:]):
-    st.text(log)
+  # バトルログ表示
+  st.markdown("### 📜 戦闘ログ")
+  log_container = st.container(height=200)
+  with log_container:
+    for log in reversed(st.session_state.battle_log[-12:]):
+      st.text(log)
 
+# ==========================================
+# ゲームオーバー画面
+# ==========================================
 elif st.session_state.phase == "gameover":
-  st.error("💀 ゲームオーバー... 全滅してしまいました。")
-  if st.button("最初からやり直す"):
+  st.error(
+      "💀 ゲームオーバー... パーティーが全滅してしまいました。世界に闇が訪れる..."
+  )
+  if st.button("🔄 最初から挑戦し直す"):
     st.session_state.clear()
     st.rerun()
 
+# ==========================================
+# クリア画面
+# ==========================================
 elif st.session_state.phase == "clear":
+  st.balloons()
   st.success(
-      "🎉 祝・全10ステージクリア！ 魔法陣のマスターとして世界を救いました！"
+      "🎉 祝・全10ステージ完全クリア！！ 究極の魔法陣を極め、世界を救うことに成功しました！"
   )
-  if st.button("もう一度プレイする"):
+  if st.button("🏆 もう一度最初から遊ぶ"):
     st.session_state.clear()
     st.rerun()
