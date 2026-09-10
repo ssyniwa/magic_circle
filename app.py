@@ -417,7 +417,7 @@ elif st.session_state.phase == "battle":
           st.image(c_img, width=200, caption="陣")
       with pc3:
         if w_img:
-          st.image(w_img, width=200, caption="武")
+          st.image(w_img, width=150, caption="武")
       with pc4:
         st.markdown(
             f"**{p['name']}**<br><small>{w['name']} ({w['stat']}+{w['value']})</small>",
