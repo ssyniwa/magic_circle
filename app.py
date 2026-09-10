@@ -337,7 +337,7 @@ elif st.session_state.phase == "equip":
       st.markdown(f"<div class='card'>", unsafe_allow_html=True)
       p_img = load_image(p["img"], width=200)
       if p_img:
-        st.image(p_img, width=80)
+        st.image(p_img, width=200)
       else:
         st.markdown(f"### 🛡️ {p['name']}")
 
@@ -357,11 +357,11 @@ elif st.session_state.phase == "equip":
 
       img_col1, img_col2 = st.columns(2)
       with img_col1:
-        c_img = load_image(chosen_weapon["circle_img"], width=50)
+        c_img = load_image(chosen_weapon["circle_img"], width=200)
         if c_img:
           st.image(c_img, width=200, caption="陣")
       with img_col2:
-        w_img = load_image(chosen_weapon["weapon_img"], width=50)
+        w_img = load_image(chosen_weapon["weapon_img"], width=200)
         if w_img:
           st.image(w_img, width=200, caption="武器")
 
