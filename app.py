@@ -411,15 +411,15 @@ elif st.session_state.phase == "battle":
       pc1, pc2, pc3, pc4 = st.columns([1, 1, 1, 2])
       with pc1:
         if p_img:
-          st.image(p_img, width=45)
+          st.image(p_img, width=200)
         else:
           st.write("👤")
       with pc2:
         if c_img:
-          st.image(c_img, width=30, caption="陣")
+          st.image(c_img, width=200, caption="陣")
       with pc3:
         if w_img:
-          st.image(w_img, width=30, caption="武")
+          st.image(w_img, width=200, caption="武")
       with pc4:
         st.markdown(
             f"**{p['name']}**<br><small>{w['name']} ({w['stat']}+{w['value']})</small>",
@@ -433,7 +433,7 @@ elif st.session_state.phase == "battle":
   with col_e:
     st.markdown("### 🔴 エネミーチーム")
     for e in st.session_state.enemies:
-      e_img = load_image(e["img"], width=45)
+      e_img = load_image(e["img"], width=200)
       hp_ratio = max(0, min(1, e["hp"] / e["max_hp"]))
 
       st.markdown(f"<div class='card'>", unsafe_allow_html=True)
