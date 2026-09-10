@@ -294,9 +294,13 @@ if st.session_state.phase == "generate":
         base_val = target_weapon["value"] / LEVEL_MULTIPLIERS[current_lvl]
         target_weapon["value"] = int(base_val * LEVEL_MULTIPLIERS[next_lvl])
 
+        # 武器名から属性部分と武器種部分を安全に抽出して再構築する
+        # 例: "炎・風の初級剣" -> 属性は "炎・風"、武器種は "剣"
         parts_name = target_weapon["name"].split("の")
         attrs = parts_name[0]
         w_type = target_weapon["type"]
+        
+        # 新しいレベルを反映した名前に更新
         target_weapon["name"] = f"{attrs}の{next_lvl}{w_type}"
 
         attr_split = attrs.split("・")
@@ -313,7 +317,6 @@ if st.session_state.phase == "generate":
 
       st.session_state.phase = "equip"
       st.rerun()
-
 # ==========================================
 # フェーズ 2: 装備フェーズ
 # ==========================================
