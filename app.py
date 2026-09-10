@@ -414,7 +414,7 @@ elif st.session_state.phase == "battle":
           st.write("👤")
       with pc2:
         if c_img:
-          st.image(c_img, width=200, caption="陣")
+          st.image(c_img, width=150, caption="陣")
       with pc3:
         if w_img:
           st.image(w_img, width=150, caption="武")
