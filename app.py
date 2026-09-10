@@ -69,10 +69,24 @@ if "stage" not in st.session_state:
 
 
 def generate_stage1_parts():
-  # 異なる2つの属性をランダムに選ぶ（例として2つチョイス、あるいは重複なしのペアなど）
-  selected_attrs = random.sample(ATTRIBUTES, 2)
+  # 異なる2つの属性のペア（組み合わせ）を3種類ランダムに選ぶ、あるいは指定の形式に則る
+  # ここでは属性の全プールから重複しないペアを3つ選出、または特定のペアから選択
+  all_pairs = [
+      ("炎", "風"),
+      ("水", "光"),
+      ("土", "闇"),
+      ("炎", "水"),
+      ("風", "土"),
+      ("光", "闇"),
+  ]
+  chosen_pair = random.choice(all_pairs)
+
   st.session_state.available_parts = {
-      "attr": selected_attrs,
+      "attr_pairs": [
+          chosen_pair,
+          random.choice([p for p in all_pairs if p != chosen_pair]),
+          random.choice([p for p in all_pairs if p != chosen_pair]),
+      ],
       "type": random.choices(WEAPON_TYPES, k=3),
       "level": ["初級", "初級", "初級"],
   }
@@ -125,7 +139,7 @@ if st.session_state.phase == "generate":
   if st.session_state.stage == 1:
     st.subheader("⚙️ ステージ1：初期魔法陣構築・武器生成フェーズ")
     st.write(
-        "ドロップした初級の部品と2つの属性を組み合わせて、3つの円形魔法陣と初期武器を構築してください。"
+        "ドロップした3つの属性ペア、武器種、初級レベルを組み合わせて、3つの円形魔法陣と初期武器を構築してください。"
     )
 
     parts = st.session_state.available_parts
@@ -134,9 +148,9 @@ if st.session_state.phase == "generate":
     c1, c2, c3 = st.columns(3)
 
     with c1:
-      st.markdown("**属性部品 (固定2種)**")
-      for a in parts["attr"]:
-        st.info(f"✨ {a}")
+      st.markdown("**属性ペア部品 (3種類)**")
+      for pair in parts["attr_pairs"]:
+        st.info(f"✨ 属性ペア: {pair[0]} と {pair[1]}")
 
     with c2:
       st.markdown("**武器種部品 (3個)**")
@@ -152,19 +166,22 @@ if st.session_state.phase == "generate":
 
     col_w1, col_w2, col_w3 = st.columns(3)
 
-    def render_magic_slot(slot_num):
+    def render_magic_slot(slot_num, assigned_pair):
       st.markdown(
           f"<div class='magic-slot'><h5>🔮 魔法陣スロット #{slot_num}</h5>",
           unsafe_allow_html=True,
       )
       st.markdown(
-          "<b>【中央コア】ドロップした2属性から選択</b>", unsafe_allow_html=True
+          f"<b>【中央コア】指定属性ペア: {assigned_pair[0]} &"
+          f" {assigned_pair[1]}</b>",
+          unsafe_allow_html=True,
       )
-      a1 = st.selectbox("属性 1 (コア)", parts["attr"], key=f"w{slot_num}_a1")
-      a2 = st.selectbox("属性 2 (コア)", parts["attr"], key=f"w{slot_num}_a2")
+      # スロットごとに割り当てられたペアの2属性を選択肢として固定または選択させる
+      a1 = assigned_pair[0]
+      a2 = assigned_pair[1]
+      st.write(f"コア属性: **{a1}** / **{a2}**")
 
       st.markdown("<b>【外周リング】武器・レベル</b>", unsafe_allow_html=True)
-      # 武器種はドロップした3つから選択
       w_type = st.selectbox(
           "武器種", parts["type"], key=f"w{slot_num}_t"
       )
@@ -209,11 +226,11 @@ if st.session_state.phase == "generate":
       }
 
     with col_w1:
-      raw_w1 = render_magic_slot(1)
+      raw_w1 = render_magic_slot(1, parts["attr_pairs"][0])
     with col_w2:
-      raw_w2 = render_magic_slot(2)
+      raw_w2 = render_magic_slot(2, parts["attr_pairs"][1])
     with col_w3:
-      raw_w3 = render_magic_slot(3)
+      raw_w3 = render_magic_slot(3, parts["attr_pairs"][2])
 
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button(
@@ -276,17 +293,14 @@ if st.session_state.phase == "generate":
     if st.button("⬆️ 武器のレベルを1段階上げる", type="primary"):
       if next_lvl != current_lvl:
         target_weapon["level"] = next_lvl
-        # レベルアップに伴い効果値も再計算・上昇
         base_val = target_weapon["value"] / LEVEL_MULTIPLIERS[current_lvl]
         target_weapon["value"] = int(base_val * LEVEL_MULTIPLIERS[next_lvl])
 
-        # 名前や画像パスの更新処理
         parts_name = target_weapon["name"].split("の")
         attrs = parts_name[0]
         w_type = target_weapon["type"]
         target_weapon["name"] = f"{attrs}の{next_lvl}{w_type}"
 
-        # 属性名の分割（例: "炎・水" -> a1="炎", a2="水"）
         attr_split = attrs.split("・")
         a1 = attr_split[0]
         a2 = attr_split[1] if len(attr_split) > 1 else a1
@@ -321,7 +335,7 @@ elif st.session_state.phase == "equip":
   for idx, p in enumerate(st.session_state.players):
     with cols[idx]:
       st.markdown(f"<div class='card'>", unsafe_allow_html=True)
-      p_img = load_image(p["img"], width=80)
+      p_img = load_image(p["img"], width=200)
       if p_img:
         st.image(p_img, width=80)
       else:
@@ -331,7 +345,6 @@ elif st.session_state.phase == "equip":
           f"基礎 ATK: {p['atk']} / DEF: {p['def']} / REC: {p['rec']}"
       )
 
-      # 既に装備していればデフォルトで選択状態にする
       default_idx = 0
       if p["weapon"] and p["weapon"]["name"] in w_names:
         default_idx = w_names.index(p["weapon"]["name"])
@@ -388,11 +401,11 @@ elif st.session_state.phase == "battle":
   with col_p:
     st.markdown("### 🔵 プレイヤーチーム")
     for p in st.session_state.players:
-      p_img = load_image(p["img"], width=45)
+      p_img = load_image(p["img"], width=200)
       hp_ratio = max(0, min(1, p["hp"] / p["max_hp"]))
       w = p["weapon"]
-      w_img = load_image(w["weapon_img"], width=30) if w else None
-      c_img = load_image(w["circle_img"], width=30) if w else None
+      w_img = load_image(w["weapon_img"], width=200) if w else None
+      c_img = load_image(w["circle_img"], width=200) if w else None
 
       st.markdown(f"<div class='card'>", unsafe_allow_html=True)
       pc1, pc2, pc3, pc4 = st.columns([1, 1, 1, 2])
@@ -427,7 +440,7 @@ elif st.session_state.phase == "battle":
       ec1, ec2 = st.columns([1, 3])
       with ec1:
         if e_img:
-          st.image(e_img, width=45)
+          st.image(e_img, width=200)
         else:
           st.write("👾")
       with ec2:
