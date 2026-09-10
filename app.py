@@ -16,7 +16,7 @@ LEVEL_MULTIPLIERS = {"初級": 1.0, "中級": 1.5, "上級": 2.2, "王級": 3.0,
 STATS = ["HP", "攻撃力", "防御力", "回復力"]
 
 
-# 画像読み込み補助関数
+# 画像読み込み補助関数 (.jpg対応)
 def load_image(path, width=80):
   if os.path.exists(path):
     try:
@@ -39,7 +39,7 @@ if "stage" not in st.session_state:
           "def": 15,
           "rec": 5,
           "weapon": None,
-          "img": "images/player_アレン.png",
+          "img": "images/player_アレン.jpg",
       },
       {
           "name": "魔導士リリア",
@@ -49,7 +49,7 @@ if "stage" not in st.session_state:
           "def": 8,
           "rec": 20,
           "weapon": None,
-          "img": "images/player_リリア.png",
+          "img": "images/player_リリア.jpg",
       },
       {
           "name": "騎士レオン",
@@ -59,7 +59,7 @@ if "stage" not in st.session_state:
           "def": 25,
           "rec": 10,
           "weapon": None,
-          "img": "images/player_レオン.png",
+          "img": "images/player_レオン.jpg",
       },
   ]
   st.session_state.enemies = []
@@ -69,7 +69,6 @@ if "stage" not in st.session_state:
 
 
 def generate_stage_parts():
-  # statの画像を廃止したため、ドロップ部品は attr(6), type(3), level(3) の計12個
   st.session_state.available_parts = {
       "attr": random.choices(ATTRIBUTES, k=6),
       "type": random.choices(WEAPON_TYPES, k=3),
@@ -88,7 +87,7 @@ def generate_enemies():
         "max_hp": e_hp,
         "atk": 18 + stage * 5,
         "def": 6 + stage * 2,
-        "img": "images/enemy_boss.png",
+        "img": "images/enemy_boss.jpg",
     })
   st.session_state.enemies = enemies
 
@@ -128,14 +127,13 @@ if st.session_state.phase == "generate":
 
   parts = st.session_state.available_parts
 
-  # ドロップ部品の一覧表示（statを除外し、attr, type, levelのみ）
   st.markdown("#### 🎁 今回ドロップした魔法陣部品一覧")
   c1, c2, c3 = st.columns(3)
 
   with c1:
     st.markdown("**属性部品 (6個)**")
     for a in parts["attr"]:
-      img = load_image(f"images/attr_{a}.png")
+      img = load_image(f"images/attr_{a}.jpg")
       if img:
         st.image(img, width=35, caption=a)
       else:
@@ -144,7 +142,7 @@ if st.session_state.phase == "generate":
   with c2:
     st.markdown("**武器種部品 (3個)**")
     for t in parts["type"]:
-      img = load_image(f"images/type_{t}.png")
+      img = load_image(f"images/type_{t}.jpg")
       if img:
         st.image(img, width=35, caption=t)
       else:
@@ -153,7 +151,7 @@ if st.session_state.phase == "generate":
   with c3:
     st.markdown("**レベル部品 (3個)**")
     for l in parts["level"]:
-      img = load_image(f"images/level_{l}.png")
+      img = load_image(f"images/level_{l}.jpg")
       if img:
         st.image(img, width=35, caption=l)
       else:
@@ -178,13 +176,14 @@ if st.session_state.phase == "generate":
     w_type = st.selectbox("武器種", WEAPON_TYPES, key=f"w{slot_num}_t")
     w_lvl = st.selectbox("レベル", LEVELS, key=f"w{slot_num}_l")
 
-    # プレビュー表示（魔法陣の完成形 ＆ 武器画像）
+    # プレビュー表示: magic_circle_ATTRIBUTES1_ATTRIBUTES2_WEAPON_LEVELS.jpg
+    # weapon_ATTRIBUTES1_ATTRIBUTES2_WEAPON_LEVELS.jpg に準拠したファイル名構成
     st.markdown("---")
     p_col1, p_col2 = st.columns(2)
     with p_col1:
-      circle_img_path = f"images/magic_circle_{a1}_{a2}.png"
+      circle_img_path = f"images/magic_circle_{a1}_{a2}_{w_type}_{w_lvl}.jpg"
       if not os.path.exists(circle_img_path):
-        circle_img_path = "images/magic_circle_base.png"
+        circle_img_path = "images/magic_circle_base.jpg"
       c_img = load_image(circle_img_path, width=70)
       if c_img:
         st.image(c_img, width=70, caption="完成魔法陣")
@@ -192,7 +191,14 @@ if st.session_state.phase == "generate":
         st.write("🌐 [魔法陣陣形]")
 
     with p_col2:
-      weapon_img_path = f"images/weapon_{w_type}_{w_lvl}.png"
+      weapon_img_path = f"images/weapon_{a1}_{a2}_{w_type}_{w_lvl}.jpg"
+      if not os.path.exists(weapon_img_path):
+        # フォールバックとして従来の命名規則も考慮する場合
+        fallback_path = f"images/weapon_{w_type}_{w_lvl}.jpg"
+        weapon_img_path = (
+            fallback_path if os.path.exists(fallback_path) else weapon_img_path
+        )
+
       w_img = load_image(weapon_img_path, width=70)
       if w_img:
         st.image(w_img, width=70, caption="生成武器")
@@ -201,7 +207,6 @@ if st.session_state.phase == "generate":
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # 武器生成時にランダムなステータスと上昇値を決定するためのプレースホルダー（確定前）
     return {
         "a1": a1,
         "a2": a2,
@@ -225,7 +230,6 @@ if st.session_state.phase == "generate":
   ):
     crafted = []
     for raw in [raw_w1, raw_w2, raw_w3]:
-      # ランダムにステータスを決定し、レベルに応じた倍率で上昇値をランダム算出
       rand_stat = random.choice(STATS)
       base_val = random.randint(5, 15)
       val = int(base_val * LEVEL_MULTIPLIERS[raw["level"]])
