@@ -71,7 +71,7 @@ if "stage" not in st.session_state:
 def generate_stage1_parts():
   # 異なる2つの属性のペア（組み合わせ）を3種類用意
   all_pairs = [
-      ("炎", "风"),
+      ("炎", "風"),
       ("水", "光"),
       ("土", "闇"),
       ("炎", "水"),
