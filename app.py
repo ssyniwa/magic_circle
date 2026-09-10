@@ -69,25 +69,23 @@ if "stage" not in st.session_state:
 
 
 def generate_stage1_parts():
-  # 異なる2つの属性のペア（組み合わせ）を3種類ランダムに選ぶ、あるいは指定の形式に則る
-  # ここでは属性の全プールから重複しないペアを3つ選出、または特定のペアから選択
+  # 異なる2つの属性のペア（組み合わせ）を3種類用意
   all_pairs = [
-      ("炎", "風"),
+      ("炎", "风"),
       ("水", "光"),
       ("土", "闇"),
       ("炎", "水"),
       ("風", "土"),
       ("光", "闇"),
   ]
-  chosen_pair = random.choice(all_pairs)
+  selected_pairs = random.sample(all_pairs, 3)
+
+  # 武器種も重複しないように3種類異なるものをランダム選択
+  selected_types = random.sample(WEAPON_TYPES, 3)
 
   st.session_state.available_parts = {
-      "attr_pairs": [
-          chosen_pair,
-          random.choice([p for p in all_pairs if p != chosen_pair]),
-          random.choice([p for p in all_pairs if p != chosen_pair]),
-      ],
-      "type": random.choices(WEAPON_TYPES, k=3),
+      "attr_pairs": selected_pairs,
+      "type": selected_types,
       "level": ["初級", "初級", "初級"],
   }
 
@@ -139,7 +137,7 @@ if st.session_state.phase == "generate":
   if st.session_state.stage == 1:
     st.subheader("⚙️ ステージ1：初期魔法陣構築・武器生成フェーズ")
     st.write(
-        "ドロップした3つの属性ペア、武器種、初級レベルを組み合わせて、3つの円形魔法陣と初期武器を構築してください。"
+        "ドロップした3つの属性ペア、異なる3種類の武器種、初級レベルを組み合わせて、3つの円形魔法陣と初期武器を構築してください。"
     )
 
     parts = st.session_state.available_parts
@@ -153,7 +151,7 @@ if st.session_state.phase == "generate":
         st.info(f"✨ 属性ペア: {pair[0]} と {pair[1]}")
 
     with c2:
-      st.markdown("**武器種部品 (3個)**")
+      st.markdown("**武器種部品 (異なる3種)**")
       for t in parts["type"]:
         st.info(f"⚔️ {t}")
 
@@ -176,15 +174,15 @@ if st.session_state.phase == "generate":
           f" {assigned_pair[1]}</b>",
           unsafe_allow_html=True,
       )
-      # スロットごとに割り当てられたペアの2属性を選択肢として固定または選択させる
       a1 = assigned_pair[0]
       a2 = assigned_pair[1]
       st.write(f"コア属性: **{a1}** / **{a2}**")
 
       st.markdown("<b>【外周リング】武器・レベル</b>", unsafe_allow_html=True)
-      w_type = st.selectbox(
-          "武器種", parts["type"], key=f"w{slot_num}_t"
-      )
+      # 3つの異なる武器種からそれぞれ1つずつ割り当てる（インデックスで固定）
+      w_type = parts["type"][slot_num - 1]
+      st.write(f"武器種: **{w_type}**")
+
       w_lvl = "初級"
       st.write(f"レベル: **{w_lvl}**")
 
