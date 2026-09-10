@@ -185,15 +185,15 @@ if st.session_state.phase == "generate":
       st.markdown("---")
       p_col1, p_col2 = st.columns(2)
       with p_col1:
-        c_img = load_image(circle_img_path, width=70)
+        c_img = load_image(circle_img_path, width=200)
         if c_img:
-          st.image(c_img, width=70, caption="完成魔法陣")
+          st.image(c_img, width=200, caption="完成魔法陣")
         else:
           st.write("🌐 [魔法陣陣形]")
       with p_col2:
-        w_img = load_image(weapon_img_path, width=70)
+        w_img = load_image(weapon_img_path, width=200)
         if w_img:
-          st.image(w_img, width=70, caption="生成武器")
+          st.image(w_img, width=200, caption="生成武器")
         else:
           st.write(f"⚔️ {w_lvl}{w_type}")
 
@@ -346,11 +346,11 @@ elif st.session_state.phase == "equip":
       with img_col1:
         c_img = load_image(chosen_weapon["circle_img"], width=50)
         if c_img:
-          st.image(c_img, width=50, caption="陣")
+          st.image(c_img, width=200, caption="陣")
       with img_col2:
         w_img = load_image(chosen_weapon["weapon_img"], width=50)
         if w_img:
-          st.image(w_img, width=50, caption="武器")
+          st.image(w_img, width=200, caption="武器")
 
       st.markdown(
           f"<small><b>{chosen_weapon['name']}</b><br>🔮効果: {chosen_weapon['stat']} +{chosen_weapon['value']}</small>",
