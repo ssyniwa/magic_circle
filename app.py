@@ -89,40 +89,119 @@ def generate_stage1_parts():
 
 def generate_enemies():
   stage = st.session_state.stage
-  enemies = []
   
-  # ステージごとに異なるボス名・雑魚敵名を決定
-  boss_titles = ["魔王", "邪竜", "覇王", "魔神", "深淵の獣", "混沌の主", "絶望の使者", "虚無の王", "破壊神", "神話の終焉"]
-  minion_titles = ["ゴブリン", "スライム", "オーク", "スケルトン", "インプ", "ハーピー", "ゴーレム", "ファントム", "リザードマン", "キメラ"]
+  # ステージごとのボス定義（1種類）
+  boss_data_list = [
+      {"name": "ゴブリンキング", "img": f"images/enemy_boss_stage1.jpg"},
+      {"name": "キングスケルトン", "img": f"images/enemy_boss_stage2.jpg"},
+      {"name": "ヴァンパイア", "img": f"images/enemy_boss_stage3.jpg"},
+      {"name": "遺跡の守護者", "img": f"images/enemy_boss_stage4.jpg"},
+      {"name": "炎雷龍", "img": f"images/enemy_boss_stage5.jpg"},
+      {"name": "デーモンエリート", "img": f"images/enemy_boss_stage6.jpg"},
+      {"name": "闇雷龍", "img": f"images/enemy_boss_stage7.jpg"},
+      {"name": "虚無の王", "img": f"images/enemy_boss_stage8.jpg"},
+      {"name": "地獄の門番", "img": f"images/enemy_boss_stage9.jpg"},
+      {"name": "地獄の王", "img": f"images/enemy_boss_stage10.jpg"},
+  ]
   
-  b_name = f"{boss_titles[(stage - 1) % len(boss_titles)]} Lv.{stage}"
+  # ステージごとの部下定義（4種類、それぞれ2体ずつ使用して計8体）
+  minion_data_pool = [
+      [
+          {"name": "ゴブリンA", "img": "images/enemy_minion_s1_1.jpg"},
+          {"name": "ゴブリンB", "img": "images/enemy_minion_s1_2.jpg"},
+          {"name": "スライムA", "img": "images/enemy_minion_s1_3.jpg"},
+          {"name": "スライムB", "img": "images/enemy_minion_s1_4.jpg"},
+      ],
+      [
+          {"name": "オークA", "img": "images/enemy_minion_s2_1.jpg"},
+          {"name": "オークB", "img": "images/enemy_minion_s2_2.jpg"},
+          {"name": "スケルトンA", "img": "images/enemy_minion_s2_3.jpg"},
+          {"name": "スケルトンB", "img": "images/enemy_minion_s2_4.jpg"},
+      ],
+      [
+          {"name": "インプA", "img": "images/enemy_minion_s3_1.jpg"},
+          {"name": "インプB", "img": "images/enemy_minion_s3_2.jpg"},
+          {"name": "ハーピーA", "img": "images/enemy_minion_s3_3.jpg"},
+          {"name": "ハーピーB", "img": "images/enemy_minion_s3_4.jpg"},
+      ],
+      [
+          {"name": "ゴーレムA", "img": "images/enemy_minion_s4_1.jpg"},
+          {"name": "ゴーレムB", "img": "images/enemy_minion_s4_2.jpg"},
+          {"name": "ファントムA", "img": "images/enemy_minion_s4_3.jpg"},
+          {"name": "ファントムB", "img": "images/enemy_minion_s4_4.jpg"},
+      ],
+      [
+          {"name": "リザードマンA", "img": "images/enemy_minion_s5_1.jpg"},
+          {"name": "リザードマンB", "img": "images/enemy_minion_s5_2.jpg"},
+          {"name": "キメラA", "img": "images/enemy_minion_s5_3.jpg"},
+          {"name": "キメラB", "img": "images/enemy_minion_s5_4.jpg"},
+      ],
+      [
+          {"name": "ダークナイトA", "img": "images/enemy_minion_s6_1.jpg"},
+          {"name": "ダークナイトB", "img": "images/enemy_minion_s6_2.jpg"},
+          {"name": "サキュバスA", "img": "images/enemy_minion_s6_3.jpg"},
+          {"name": "サキュバスB", "img": "images/enemy_minion_s6_4.jpg"},
+      ],
+      [
+          {"name": "ワイバーンA", "img": "images/enemy_minion_s7_1.jpg"},
+          {"name": "ワイバーンB", "img": "images/enemy_minion_s7_2.jpg"},
+          {"name": "サイクロプスA", "img": "images/enemy_minion_s7_3.jpg"},
+          {"name": "サイクロプスB", "img": "images/enemy_minion_s7_4.jpg"},
+      ],
+      [
+          {"name": "リッチA", "img": "images/enemy_minion_s8_1.jpg"},
+          {"name": "リッチB", "img": "images/enemy_minion_s8_2.jpg"},
+          {"name": "デュークA", "img": "images/enemy_minion_s8_3.jpg"},
+          {"name": "デュークB", "img": "images/enemy_minion_s8_4.jpg"},
+      ],
+      [
+          {"name": "アークデーモンA", "img": "images/enemy_minion_s9_1.jpg"},
+          {"name": "アークデーモンB", "img": "images/enemy_minion_s9_2.jpg"},
+          {"name": "ヘルハウンドA", "img": "images/enemy_minion_s9_3.jpg"},
+          {"name": "ヘルハウンドB", "img": "images/enemy_minion_s9_4.jpg"},
+      ],
+      [
+          {"name": "シャドウA", "img": "images/enemy_minion_s10_1.jpg"},
+          {"name": "シャドウB", "img": "images/enemy_minion_s10_2.jpg"},
+          {"name": "アビスA", "img": "images/enemy_minion_s10_3.jpg"},
+          {"name": "アビスB", "img": "images/enemy_minion_s10_4.jpg"},
+      ],
+  ]
+
+  b_info = boss_data_list[(stage - 1) % len(boss_data_list)]
   e_hp_boss = 120 + stage * 40
   
-  # 3x3 (計9体) の配置生成：インデックス 4 が中央（ボス）、他は雑魚敵
-  for i in range(9):
-    if i == 4:
-      enemies.append({
-          "name": b_name,
-          "hp": e_hp_boss,
-          "max_hp": e_hp_boss,
-          "atk": 22 + stage * 6,
-          "def": 10 + stage * 3,
-          "img": "images/enemy_boss.jpg",
-          "is_boss": True,
-      })
-    else:
-      m_name = f"{minion_titles[(stage + i) % len(minion_titles)]} Lv.{stage}-{i+1}"
+  boss_obj = {
+      "name": f"{b_info['name']} Lv.{stage}",
+      "hp": e_hp_boss,
+      "max_hp": e_hp_boss,
+      "atk": 22 + stage * 6,
+      "def": 10 + stage * 3,
+      "img": b_info["img"],
+      "is_boss": True,
+  }
+
+  minions = []
+  m_pool = minion_data_pool[(stage - 1) % len(minion_data_pool)]
+  # 4種類の部下をそれぞれ2体ずつ生成（計8体）
+  for m_template in m_pool:
+    for copy_idx in range(2):
       e_hp_minion = 50 + stage * 20
-      enemies.append({
-          "name": m_name,
+      minions.append({
+          "name": f"{m_template['name']} ({copy_idx+1})",
           "hp": e_hp_minion,
           "max_hp": e_hp_minion,
           "atk": 14 + stage * 4,
           "def": 5 + stage * 2,
-          "img": "images/enemy_boss.jpg",
+          "img": m_template["img"],
           "is_boss": False,
       })
-  st.session_state.enemies = enemies
+
+  # ボス1体と部下8体を合わせた計9体をリストにしてシャッフル（3x3グリッドへランダム配置）
+  all_stage_enemies = [boss_obj] + minions
+  random.shuffle(all_stage_enemies)
+  
+  st.session_state.enemies = all_stage_enemies
 
 
 if not st.session_state.available_parts and st.session_state.phase == "generate":
@@ -414,7 +493,7 @@ elif st.session_state.phase == "equip":
 
     generate_enemies()
     st.session_state.phase = "battle"
-    st.session_state.battle_log = ["⚔️ バトルが開始されました！ 敵が3×3グリッドで立ちはだかる！"]
+    st.session_state.battle_log = ["⚔️ バトルが開始されました！ ステージボスと部下が3×3グリッドに配置された！"]
     st.rerun()
 
 # ==========================================
@@ -459,9 +538,9 @@ elif st.session_state.phase == "battle":
       st.markdown("</div>", unsafe_allow_html=True)
 
   with col_e:
-    st.markdown("### 🔴 エネミーチーム (3×3グリッド)")
+    st.markdown("### 🔴 エネミーチーム (3×3グリッド配置)")
     
-    # 3x3 グリッドを描画
+    # 3x3 グリッドを描画（ボス1体＋部下8体がランダム配置されたエネミーリストを表示）
     enemies = st.session_state.enemies
     for r in range(3):
       grid_cols = st.columns(3)
@@ -473,6 +552,12 @@ elif st.session_state.phase == "battle":
             hp_ratio = max(0, min(1, e["hp"] / e["max_hp"]))
             card_class = "boss-card" if e.get("is_boss") else "enemy-card"
             st.markdown(f"<div class='{card_class}'>", unsafe_allow_html=True)
+            
+            # 敵の個別画像を表示
+            e_img = load_image(e["img"], width=100)
+            if e_img:
+              st.image(e_img, width=100)
+            
             if e["hp"] > 0:
               boss_tag = "👑 **[BOSS]**<br>" if e.get("is_boss") else ""
               st.markdown(f"{boss_tag}<b>{e['name']}</b>", unsafe_allow_html=True)
@@ -493,7 +578,6 @@ elif st.session_state.phase == "battle":
         w = p["weapon"]
         w_type = w["type"] if w else "剣"
         
-        # 射程範囲による対象の選定
         target_indices = []
         living_indices = [i for i, e in enumerate(enemies) if e["hp"] > 0]
         
@@ -501,10 +585,8 @@ elif st.session_state.phase == "battle":
           continue
 
         if w_type == "剣":
-          # 剣: 前衛単体（生き残っている敵の中からランダムで1体、または前方優先）
           target_indices = [random.choice(living_indices)]
         elif w_type == "槍":
-          # 槍: 縦一列（0,3,6 / 1,4,7 / 2,5,8 のいずれか列を選択してその列の生存者全員）
           cols_available = []
           for col_idx in range(3):
             col_members = [col_idx, col_idx + 3, col_idx + 6]
@@ -516,14 +598,11 @@ elif st.session_state.phase == "battle":
           else:
             target_indices = [random.choice(living_indices)]
         elif w_type == "弓":
-          # 弓: ランダムに最大3体
           count = min(3, len(living_indices))
           target_indices = random.sample(living_indices, count)
         elif w_type == "杖":
-          # 杖: 全体（生存しているすべての敵）
           target_indices = living_indices
 
-        # ダメージ計算と適用
         for t_idx in target_indices:
           target = enemies[t_idx]
           dmg = max(5, p["atk"] - target["def"] // 3)
