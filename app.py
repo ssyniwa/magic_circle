@@ -69,7 +69,6 @@ if "stage" not in st.session_state:
 
 
 def generate_stage1_parts():
-  # 異なる2つの属性のペア（組み合わせ）を3種類用意
   all_pairs = [
       ("炎", "風"),
       ("水", "光"),
@@ -79,8 +78,6 @@ def generate_stage1_parts():
       ("光", "闇"),
   ]
   selected_pairs = random.sample(all_pairs, 3)
-
-  # 武器種も重複しないように3種類異なるものをランダム選択
   selected_types = random.sample(WEAPON_TYPES, 3)
 
   st.session_state.available_parts = {
@@ -93,16 +90,38 @@ def generate_stage1_parts():
 def generate_enemies():
   stage = st.session_state.stage
   enemies = []
-  for i in range(3):
-    e_hp = 70 + stage * 30
-    enemies.append({
-        "name": f"魔物 Lv.{stage}-{i+1}",
-        "hp": e_hp,
-        "max_hp": e_hp,
-        "atk": 18 + stage * 5,
-        "def": 6 + stage * 2,
-        "img": "images/enemy_boss.jpg",
-    })
+  
+  # ステージごとに異なるボス名・雑魚敵名を決定
+  boss_titles = ["魔王", "邪竜", "覇王", "魔神", "深淵の獣", "混沌の主", "絶望の使者", "虚無の王", "破壊神", "神話の終焉"]
+  minion_titles = ["ゴブリン", "スライム", "オーク", "スケルトン", "インプ", "ハーピー", "ゴーレム", "ファントム", "リザードマン", "キメラ"]
+  
+  b_name = f"{boss_titles[(stage - 1) % len(boss_titles)]} Lv.{stage}"
+  e_hp_boss = 120 + stage * 40
+  
+  # 3x3 (計9体) の配置生成：インデックス 4 が中央（ボス）、他は雑魚敵
+  for i in range(9):
+    if i == 4:
+      enemies.append({
+          "name": b_name,
+          "hp": e_hp_boss,
+          "max_hp": e_hp_boss,
+          "atk": 22 + stage * 6,
+          "def": 10 + stage * 3,
+          "img": "images/enemy_boss.jpg",
+          "is_boss": True,
+      })
+    else:
+      m_name = f"{minion_titles[(stage + i) % len(minion_titles)]} Lv.{stage}-{i+1}"
+      e_hp_minion = 50 + stage * 20
+      enemies.append({
+          "name": m_name,
+          "hp": e_hp_minion,
+          "max_hp": e_hp_minion,
+          "atk": 14 + stage * 4,
+          "def": 5 + stage * 2,
+          "img": "images/enemy_boss.jpg",
+          "is_boss": False,
+      })
   st.session_state.enemies = enemies
 
 
@@ -118,6 +137,8 @@ st.markdown(
     .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; }
     .card { background-color: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #dee2e6; margin-bottom: 10px; }
     .magic-slot { background: linear-gradient(135deg, #1f4068, #162447); padding: 15px; border-radius: 12px; color: white; border: 2px solid #e43f5a; margin-bottom: 15px; }
+    .enemy-card { background-color: #fff0f0; padding: 10px; border-radius: 8px; border: 1px solid #ffcccc; margin-bottom: 8px; text-align: center; }
+    .boss-card { background-color: #ffe6e6; padding: 12px; border-radius: 8px; border: 2px solid #ff4d4d; margin-bottom: 8px; text-align: center; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -179,7 +200,6 @@ if st.session_state.phase == "generate":
       st.write(f"コア属性: **{a1}** / **{a2}**")
 
       st.markdown("<b>【外周リング】武器・レベル</b>", unsafe_allow_html=True)
-      # 3つの異なる武器種からそれぞれ1つずつ割り当てる（インデックスで固定）
       w_type = parts["type"][slot_num - 1]
       st.write(f"武器種: **{w_type}**")
 
@@ -256,7 +276,6 @@ if st.session_state.phase == "generate":
       st.rerun()
 
   else:
-    # ステージ2以降：武器のレベルを1段階上げるフェーズ
     st.subheader(f"🛠️ ステージ {st.session_state.stage}：武器レベルアップフェーズ")
     st.write(
         "保有している3つの武器から1つを選び、レベルを1段階アップグレードしてください。"
@@ -281,7 +300,7 @@ if st.session_state.phase == "generate":
     if curr_idx < len(lvl_list) - 1:
       next_lvl = lvl_list[curr_idx + 1]
     else:
-      next_lvl = current_lvl  # すでに最高ランク
+      next_lvl = current_lvl
 
     st.markdown(f"**選択中の武器:** {target_weapon['name']}")
     st.write(
@@ -294,13 +313,9 @@ if st.session_state.phase == "generate":
         base_val = target_weapon["value"] / LEVEL_MULTIPLIERS[current_lvl]
         target_weapon["value"] = int(base_val * LEVEL_MULTIPLIERS[next_lvl])
 
-        # 武器名から属性部分と武器種部分を安全に抽出して再構築する
-        # 例: "炎・風の初級剣" -> 属性は "炎・風"、武器種は "剣"
         parts_name = target_weapon["name"].split("の")
         attrs = parts_name[0]
         w_type = target_weapon["type"]
-        
-        # 新しいレベルを反映した名前に更新
         target_weapon["name"] = f"{attrs}の{next_lvl}{w_type}"
 
         attr_split = attrs.split("・")
@@ -317,6 +332,7 @@ if st.session_state.phase == "generate":
 
       st.session_state.phase = "equip"
       st.rerun()
+
 # ==========================================
 # フェーズ 2: 装備フェーズ
 # ==========================================
@@ -356,6 +372,16 @@ elif st.session_state.phase == "equip":
       chosen_weapon = weapon_options[selected_w_name]
       assigned_weapons.append(chosen_weapon)
 
+      # 武器タイプに応じた射程範囲の説明を表示
+      w_type = chosen_weapon["type"]
+      range_desc = {
+          "剣": "前衛単体（指定した1体）",
+          "槍": "縦一列（3体）",
+          "弓": "ランダム3体",
+          "杖": "全体（9体すべて）"
+      }.get(w_type, "単体")
+      st.info(f"🎯 射程範囲: **{range_desc}**")
+
       img_col1, img_col2 = st.columns(2)
       with img_col1:
         c_img = load_image(chosen_weapon["circle_img"], width=200)
@@ -388,16 +414,16 @@ elif st.session_state.phase == "equip":
 
     generate_enemies()
     st.session_state.phase = "battle"
-    st.session_state.battle_log = ["⚔️ バトルが開始されました！"]
+    st.session_state.battle_log = ["⚔️ バトルが開始されました！ 敵が3×3グリッドで立ちはだかる！"]
     st.rerun()
 
 # ==========================================
-# フェーズ 3: バトルフェーズ (3対3)
+# フェーズ 3: バトルフェーズ (プレイヤー vs 3x3グリッドエネミー)
 # ==========================================
 elif st.session_state.phase == "battle":
-  st.subheader("⚔️ 3対3 バトルフェーズ")
+  st.subheader("⚔️ バトルフェーズ (3×3グリッド戦)")
 
-  col_p, col_e = st.columns(2)
+  col_p, col_e = st.columns([1, 1])
 
   with col_p:
     st.markdown("### 🔵 プレイヤーチーム")
@@ -417,13 +443,14 @@ elif st.session_state.phase == "battle":
           st.write("👤")
       with pc2:
         if c_img:
-          st.image(c_img, width=150, caption="陣")
+          st.image(c_img, width=120, caption="陣")
       with pc3:
         if w_img:
-          st.image(w_img, width=150, caption="武")
+          st.image(w_img, width=120, caption="武")
       with pc4:
+        w_type = w["type"] if w else ""
         st.markdown(
-            f"**{p['name']}**<br><small>{w['name']} ({w['stat']}+{w['value']})</small>",
+            f"**{p['name']}** <small>({w_type})</small><br><small>{w['name'] if w else ''}</small>",
             unsafe_allow_html=True,
         )
         st.progress(
@@ -432,50 +459,88 @@ elif st.session_state.phase == "battle":
       st.markdown("</div>", unsafe_allow_html=True)
 
   with col_e:
-    st.markdown("### 🔴 エネミーチーム")
-    for e in st.session_state.enemies:
-      e_img = load_image(e["img"], width=200)
-      hp_ratio = max(0, min(1, e["hp"] / e["max_hp"]))
-
-      st.markdown(f"<div class='card'>", unsafe_allow_html=True)
-      ec1, ec2 = st.columns([1, 3])
-      with ec1:
-        if e_img:
-          st.image(e_img, width=200)
-        else:
-          st.write("👾")
-      with ec2:
-        if e["hp"] > 0:
-          st.markdown(f"**{e['name']}**")
-          st.progress(
-              hp_ratio, text=f"HP: {max(0, e['hp'])} / {e['max_hp']}"
-          )
-        else:
-          st.markdown(f"~~{e['name']}~~ **【戦闘不能】**")
-      st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("### 🔴 エネミーチーム (3×3グリッド)")
+    
+    # 3x3 グリッドを描画
+    enemies = st.session_state.enemies
+    for r in range(3):
+      grid_cols = st.columns(3)
+      for c in range(3):
+        idx = r * 3 + c
+        if idx < len(enemies):
+          e = enemies[idx]
+          with grid_cols[c]:
+            hp_ratio = max(0, min(1, e["hp"] / e["max_hp"]))
+            card_class = "boss-card" if e.get("is_boss") else "enemy-card"
+            st.markdown(f"<div class='{card_class}'>", unsafe_allow_html=True)
+            if e["hp"] > 0:
+              boss_tag = "👑 **[BOSS]**<br>" if e.get("is_boss") else ""
+              st.markdown(f"{boss_tag}<b>{e['name']}</b>", unsafe_allow_html=True)
+              st.progress(hp_ratio, text=f"{max(0, e['hp'])}/{e['max_hp']}")
+            else:
+              st.markdown(f"~~{e['name']}~~<br><b>【撃破】</b>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
   st.markdown("---")
 
   if st.button("⚔️ ターン進行 (攻撃＆回復)", type="primary"):
     logs = []
+    enemies = st.session_state.enemies
+
+    # プレイヤーの攻撃処理（武器の射程範囲に基づく）
     for p in st.session_state.players:
       if p["hp"] > 0:
-        living_enemies = [e for e in st.session_state.enemies if e["hp"] > 0]
-        if living_enemies:
-          target = random.choice(living_enemies)
+        w = p["weapon"]
+        w_type = w["type"] if w else "剣"
+        
+        # 射程範囲による対象の選定
+        target_indices = []
+        living_indices = [i for i, e in enumerate(enemies) if e["hp"] > 0]
+        
+        if not living_indices:
+          continue
+
+        if w_type == "剣":
+          # 剣: 前衛単体（生き残っている敵の中からランダムで1体、または前方優先）
+          target_indices = [random.choice(living_indices)]
+        elif w_type == "槍":
+          # 槍: 縦一列（0,3,6 / 1,4,7 / 2,5,8 のいずれか列を選択してその列の生存者全員）
+          cols_available = []
+          for col_idx in range(3):
+            col_members = [col_idx, col_idx + 3, col_idx + 6]
+            if any(enemies[m]["hp"] > 0 for m in col_members):
+              cols_available.append(col_members)
+          if cols_available:
+            chosen_col = random.choice(cols_available)
+            target_indices = [m for m in chosen_col if enemies[m]["hp"] > 0]
+          else:
+            target_indices = [random.choice(living_indices)]
+        elif w_type == "弓":
+          # 弓: ランダムに最大3体
+          count = min(3, len(living_indices))
+          target_indices = random.sample(living_indices, count)
+        elif w_type == "杖":
+          # 杖: 全体（生存しているすべての敵）
+          target_indices = living_indices
+
+        # ダメージ計算と適用
+        for t_idx in target_indices:
+          target = enemies[t_idx]
           dmg = max(5, p["atk"] - target["def"] // 3)
           target["hp"] = max(0, target["hp"] - dmg)
-          logs.append(f"🟢 {p['name']} の攻撃！ {target['name']} に {dmg} のダメージ！")
+          logs.append(f"🟢 {p['name']} ({w_type}) の攻撃！ {target['name']} に {dmg} のダメージ！")
 
-    for e in st.session_state.enemies:
-      if e["hp"] > 0:
-        living_players = [pl for pl in st.session_state.players if pl["hp"] > 0]
-        if living_players:
-          target = random.choice(living_players)
-          dmg = max(4, e["atk"] - target["def"] // 3)
-          target["hp"] = max(0, target["hp"] - dmg)
-          logs.append(f"🔴 {e['name']} の反撃！ {target['name']} に {dmg} のダメージ！")
+    # エネミーの反撃処理
+    living_enemies = [e for e in enemies if e["hp"] > 0]
+    for e in living_enemies:
+      living_players = [pl for pl in st.session_state.players if pl["hp"] > 0]
+      if living_players:
+        target = random.choice(living_players)
+        dmg = max(4, e["atk"] - target["def"] // 3)
+        target["hp"] = max(0, target["hp"] - dmg)
+        logs.append(f"🔴 {e['name']} の反撃！ {target['name']} に {dmg} のダメージ！")
 
+    # プレイヤーの回復スキル処理
     for p in st.session_state.players:
       if p["hp"] > 0 and p["rec"] > 0:
         living_players = [pl for pl in st.session_state.players if pl["hp"] > 0]
@@ -490,7 +555,7 @@ elif st.session_state.phase == "battle":
 
     st.session_state.battle_log.extend(logs)
 
-    all_enemies_dead = all(e["hp"] <= 0 for e in st.session_state.enemies)
+    all_enemies_dead = all(e["hp"] <= 0 for e in enemies)
     all_players_dead = all(p["hp"] <= 0 for p in st.session_state.players)
 
     if all_enemies_dead:
