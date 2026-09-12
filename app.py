@@ -97,11 +97,11 @@ def generate_enemies():
       {"name": "ヴァンパイア", "img": f"images/enemy_boss_stage3.jpg"},
       {"name": "遺跡の守護者", "img": f"images/enemy_boss_stage4.jpg"},
       {"name": "炎雷龍", "img": f"images/enemy_boss_stage5.jpg"},
-      {"name": "デーモンエリート", "img": f"images/enemy_boss_stage6.jpg"},
-      {"name": "闇雷龍", "img": f"images/enemy_boss_stage7.jpg"},
-      {"name": "虚無の王", "img": f"images/enemy_boss_stage8.jpg"},
-      {"name": "地獄の門番", "img": f"images/enemy_boss_stage9.jpg"},
-      {"name": "地獄の王", "img": f"images/enemy_boss_stage10.jpg"},
+      {"name": "四天王デーモンエリート", "img": f"images/enemy_boss_stage6.jpg"},
+      {"name": "四天王闇雷龍", "img": f"images/enemy_boss_stage7.jpg"},
+      {"name": "四天王虚無の暗殺者", "img": f"images/enemy_boss_stage8.jpg"},
+      {"name": "四天王冷酷のクイーン", "img": f"images/enemy_boss_stage9.jpg"},
+      {"name": "地獄の魔王", "img": f"images/enemy_boss_stage10.jpg"},
   ]
   
   # ステージごとの部下定義（4種類、それぞれ2体ずつ使用して計8体）
