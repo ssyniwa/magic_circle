@@ -564,8 +564,8 @@ elif st.session_state.phase == "battle":
             e_img = load_image(e["img"], width=200)
             if e_img:
               st.image(e_img, width=200)
-               st.markdown(f"<div class='{card_class}'>", unsafe_allow_html=True)
-
+              st.markdown(f"<div class='{card_class}'>", unsafe_allow_html=True)
+  
             if e["hp"] > 0:
               boss_tag = "👑 **[BOSS]**<br>" if e.get("is_boss") else ""
               st.progress(hp_ratio, text=f"{max(0, e['hp'])}/{e['max_hp']}")
