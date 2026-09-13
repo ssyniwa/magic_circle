@@ -39,6 +39,7 @@ if "stage" not in st.session_state:
           "def": 15,
           "rec": 5,
           "weapon": None,
+          "favorite_weapons": ["剣", "槍"],
           "img": "images/player_アレン.jpg",
       },
       {
@@ -49,6 +50,7 @@ if "stage" not in st.session_state:
           "def": 8,
           "rec": 20,
           "weapon": None,
+          "favorite_weapons": ["杖", "弓"],
           "img": "images/player_リリア.jpg",
       },
       {
@@ -59,6 +61,7 @@ if "stage" not in st.session_state:
           "def": 25,
           "rec": 10,
           "weapon": None,
+          "favorite_weapons": ["弓", "槍"],
           "img": "images/player_レオン.jpg",
       },
   ]
@@ -170,33 +173,59 @@ def generate_enemies():
 
   b_info = boss_data_list[(stage - 1) % len(boss_data_list)]
   
-  # ステージごとのステータス上昇倍率を従来の2倍以上に設定
-  e_hp_boss = 120 + (stage - 1) * 110
-  
-  boss_obj = {
-      "name": f"{b_info['name']} Lv.{stage}",
-      "hp": e_hp_boss,
-      "max_hp": e_hp_boss,
-      "atk": 22 + (stage - 1) * 16,
-      "def": 10 + (stage - 1) * 9,
-      "img": b_info["img"],
-      "is_boss": True,
-  }
+  if stage == 1:
+    e_hp_boss = 80
+    boss_obj = {
+        "name": f"{b_info['name']} Lv.1",
+        "hp": e_hp_boss,
+        "max_hp": e_hp_boss,
+        "atk": 10,
+        "def": 3,
+        "img": b_info["img"],
+        "is_boss": True,
+    }
 
-  minions = []
-  m_pool = minion_data_pool[(stage - 1) % len(minion_data_pool)]
-  for m_template in m_pool:
-    for copy_idx in range(2):
-      e_hp_minion = 50 + (stage - 1) * 55
-      minions.append({
-          "name": f"{m_template['name']} ({copy_idx+1})",
-          "hp": e_hp_minion,
-          "max_hp": e_hp_minion,
-          "atk": 14 + (stage - 1) * 11,
-          "def": 5 + (stage - 1) * 6,
-          "img": m_template["img"],
-          "is_boss": False,
-      })
+    minions = []
+    m_pool = minion_data_pool[0]
+    for m_template in m_pool:
+      for copy_idx in range(2):
+        e_hp_minion = 30
+        minions.append({
+            "name": f"{m_template['name']} ({copy_idx+1})",
+            "hp": e_hp_minion,
+            "max_hp": e_hp_minion,
+            "atk": 6,
+            "def": 1,
+            "img": m_template["img"],
+            "is_boss": False,
+        })
+  else:
+    e_hp_boss = 150 + (stage - 1) * 250
+    boss_obj = {
+        "name": f"{b_info['name']} Lv.{stage}",
+        "hp": e_hp_boss,
+        "max_hp": e_hp_boss,
+        "atk": 25 + (stage - 1) * 30,
+        "def": 12 + (stage - 1) * 15,
+        "img": b_info["img"],
+        "is_boss": True,
+    }
+
+    minions = []
+    m_pool = minion_data_pool[(stage - 1) % len(minion_data_pool)]
+    for m_template in m_pool:
+      for copy_idx in range(2):
+        e_hp_minion = 60 + (stage - 1) * 120
+        minions.append({
+            "name": f"{m_template['name']} ({copy_idx+1})",
+            "hp": e_hp_minion,
+            "max_hp": e_hp_minion,
+            "atk": 16 + (stage - 1) * 20,
+            "def": 6 + (stage - 1) * 10,
+            "img": m_template["img"],
+            "is_boss": False,
+        })
+
   all_stage_enemies = [boss_obj] + minions
   random.shuffle(all_stage_enemies)
   
@@ -335,7 +364,6 @@ if st.session_state.phase == "generate":
     ):
       crafted = []
       for raw in [raw_w1, raw_w2, raw_w3]:
-        # 全ステータスに対して初期ボーナス値をランダム設定
         base_vals = {
             "HP": random.randint(10, 25),
             "攻撃力": random.randint(3, 8),
@@ -350,7 +378,7 @@ if st.session_state.phase == "generate":
             "name": f"{raw['a1']}・{raw['a2']}の{raw['level']}{raw['type']}",
             "type": raw["type"],
             "level": raw["level"],
-            "stats_bonus": stats_val,  # 全ステータスのボーナスを保持
+            "stats_bonus": stats_val,
             "circle_img": raw["circle_img"],
             "weapon_img": raw["weapon_img"],
         })
@@ -366,7 +394,6 @@ if st.session_state.phase == "generate":
 
     weapons = st.session_state.crafted_weapons
     
-    # 選択肢の表示用テキストに全ステータスボーナスを含める
     weapon_options = {}
     for i, w in enumerate(weapons):
       bonus_str = " / ".join([f"{k}:+{v}" for k, v in w["stats_bonus"].items()])
@@ -395,7 +422,6 @@ if st.session_state.phase == "generate":
 
     if st.button("⬆️ 武器のレベルを1段階上げる", type="primary"):
       if next_lvl != current_lvl:
-        # 現在の倍率からベース値を逆算し、新レベルの倍率で全ステータスを再計算
         old_mult = LEVEL_MULTIPLIERS[current_lvl]
         new_mult = LEVEL_MULTIPLIERS[next_lvl]
         
@@ -452,8 +478,11 @@ elif st.session_state.phase == "equip":
       else:
         st.markdown(f"### 🛡️ {p['name']}")
 
+      fav_str = ", ".join(p["favorite_weapons"])
       st.write(
-          f"基礎 ATK: {p['atk']} / DEF: {p['def']} / REC: {p['rec']}"
+          f"基礎 ATK: {p['atk']} / DEF: {p['def']} / REC: {p['rec']}<br>"
+          f"⭐ 得意武器: <b>{fav_str}</b>",
+          unsafe_allow_html=True
       )
 
       default_idx = 0
@@ -485,8 +514,10 @@ elif st.session_state.phase == "equip":
         if w_img:
           st.image(w_img, width=200, caption="武器")
 
-      # カード内の効果表示部分
       bonus_display = "<br>".join([f"🔮 {k} +{v}" for k, v in chosen_weapon['stats_bonus'].items()])
+      if w_type in p["favorite_weapons"]:
+        bonus_display += "<br><span style='color: #ff4d4d; font-weight: bold;'>⭐ 得意武器ボーナス: 攻撃力 +10</span>"
+        
       st.markdown(
           f"<small><b>{chosen_weapon['name']}</b><br>{bonus_display}</small>",
           unsafe_allow_html=True,
@@ -494,20 +525,26 @@ elif st.session_state.phase == "equip":
       st.markdown("</div>", unsafe_allow_html=True)
 
   if st.button("🚀 バトルフェーズへ突入！", type="primary"):
+    log_messages = ["⚔️ バトルが開始されました！ ステージボスと部下が3×3グリッドに配置された！"]
     for i, p in enumerate(st.session_state.players):
       w = assigned_weapons[i]
       p["weapon"] = w
-      # すべてのステータスボーナスをキャラクターに加算
       p["max_hp"] += w["stats_bonus"]["HP"] * 4
       p["hp"] = p["max_hp"]
       p["atk"] += w["stats_bonus"]["攻撃力"]
       p["def"] += w["stats_bonus"]["防御力"]
       p["rec"] += w["stats_bonus"]["回復力"]
 
+      # 得意武器を装備している場合は攻撃力ボーナス(+10)を付与
+      if w["type"] in p["favorite_weapons"]:
+        p["atk"] += 10
+        log_messages.append(f"⭐ {p['name']} は得意武器（{w['type']}）の装備により攻撃力がさらに +10 アップ！")
+
     generate_enemies()
     st.session_state.phase = "battle"
-    st.session_state.battle_log = ["⚔️ バトルが開始されました！ ステージボスと部下が3×3グリッドに配置された！"]
+    st.session_state.battle_log = log_messages
     st.rerun()
+
 # ==========================================
 # フェーズ 3: バトルフェーズ (プレイヤー vs 3x3グリッドエネミー)
 # ==========================================
@@ -525,7 +562,6 @@ elif st.session_state.phase == "battle":
       w_img = load_image(w["weapon_img"], width=200) if w else None
       c_img = load_image(w["circle_img"], width=200) if w else None
 
-      
       pc1, pc3 = st.columns([1, 1])
       with pc1:
         if p_img:
@@ -543,9 +579,6 @@ elif st.session_state.phase == "battle":
       with pc3:
         if w_img:
           st.image(w_img, width=200)
-      
-        
-        
       st.markdown("</div>", unsafe_allow_html=True)
 
   with col_e:
@@ -560,14 +593,11 @@ elif st.session_state.phase == "battle":
           e = enemies[idx]
           with grid_cols[c]:
             hp_ratio = max(0.0, min(1.0, e["hp"] / e["max_hp"] if e["max_hp"] > 0 else 0.0))
-            card_class = "boss-card" if e.get("is_boss") else "enemy-card"
-            
             
             e_img = load_image(e["img"], width=200)
             if e_img:
               st.image(e_img, width=200)
-              
-  
+
             if e["hp"] > 0:
               boss_tag = "👑 **[BOSS]**<br>" if e.get("is_boss") else ""
               st.markdown(f"{boss_tag}<b>{e['name']}</b>", unsafe_allow_html=True)
@@ -578,8 +608,6 @@ elif st.session_state.phase == "battle":
 
   st.markdown("---")
 
-  # st.formを用いることで、フォーム内のプルダウン変更では再描画（ターン進行）せず、
-  # 「ターンを進行する」ボタンを押した時のみ値が送信されて処理が走るようになります。
   with st.form(key="battle_form"):
     st.markdown("#### 🎯 攻撃対象の手動選択（剣・槍の装備キャラ）")
     manual_targets = {}
@@ -628,7 +656,6 @@ elif st.session_state.phase == "battle":
     logs = []
     enemies = st.session_state.enemies
 
-    # プレイヤーの攻撃処理（手動選択または武器種に応じた処理）
     for p_idx, p in enumerate(st.session_state.players):
       if p["hp"] > 0:
         w = p["weapon"]
@@ -674,7 +701,6 @@ elif st.session_state.phase == "battle":
           target["hp"] = max(0, target["hp"] - dmg)
           logs.append(f"🟢 {p['name']} ({w_type}) の攻撃！ {target['name']} に {dmg} のダメージ！")
 
-    # エネミーの反撃処理
     living_enemies = [e for e in enemies if e["hp"] > 0]
     for e in living_enemies:
       living_players = [pl for pl in st.session_state.players if pl["hp"] > 0]
@@ -684,7 +710,6 @@ elif st.session_state.phase == "battle":
         target["hp"] = max(0, target["hp"] - dmg)
         logs.append(f"🔴 {e['name']} の反撃！ {target['name']} に {dmg} のダメージ！")
 
-    # プレイヤーの回復スキル処理
     for p in st.session_state.players:
       if p["hp"] > 0 and p["rec"] > 0:
         living_players = [pl for pl in st.session_state.players if pl["hp"] > 0]
@@ -722,6 +747,7 @@ elif st.session_state.phase == "battle":
   with log_container:
     for log in reversed(st.session_state.battle_log[-12:]):
       st.text(log)
+
 # ==========================================
 # ゲームオーバー画面
 # ==========================================
