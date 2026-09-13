@@ -529,6 +529,9 @@ elif st.session_state.phase == "battle":
       with pc1:
         if p_img:
           st.image(p_img, width=200)
+          st.progress(
+            hp_ratio, text=f"HP: {max(0, p['hp'])} / {p['max_hp']}"
+          )
         else:
           st.write("👤")
       with pc3:
@@ -540,9 +543,7 @@ elif st.session_state.phase == "battle":
             f"**{p['name']}** <small>({w_type})</small><br><small>{w['name'] if w else ''}</small>",
             unsafe_allow_html=True,
         )
-        st.progress(
-            hp_ratio, text=f"HP: {max(0, p['hp'])} / {p['max_hp']}"
-        )
+        
       st.markdown("</div>", unsafe_allow_html=True)
 
   with col_e:
