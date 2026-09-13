@@ -606,7 +606,7 @@ elif st.session_state.phase == "battle":
 
   st.markdown("---")
 
-  # 2. ターン進行を明示的なボタン押下時のみに修正
+  # 2. ターン進行ボタンを明確化し、セレクトボックス変更時の自動ターン進行を防止
   if st.button("⚔️ ターゲットを決定してターン進行 (攻撃＆回復)", type="primary"):
     logs = []
     enemies = st.session_state.enemies
