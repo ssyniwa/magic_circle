@@ -199,13 +199,13 @@ def generate_enemies():
         })
   else:
     # ステージ2以降は従来通りの高倍率な強化スケーリングを適用
-    e_hp_boss = 130 + (stage-1) * 250
+    e_hp_boss = 130 + (stage-1) * 150
     boss_obj = {
         "name": f"{b_info['name']} Lv.{stage}",
         "hp": e_hp_boss,
         "max_hp": e_hp_boss,
-        "atk": 25 + (stage-1) * 30,
-        "def": 12 + (stage-1) * 15,
+        "atk": 25 + (stage-1) * 20,
+        "def": 12 + (stage-1) * 5,
         "img": b_info["img"],
         "is_boss": True,
     }
