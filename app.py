@@ -172,13 +172,13 @@ def generate_enemies():
   
   # ステージ1のみ敵のステータスを大幅に低くしてサクサク進めるようにする
   if stage == 1:
-    e_hp_boss = 130
+    e_hp_boss = 100
     boss_obj = {
         "name": f"{b_info['name']} Lv.1",
         "hp": e_hp_boss,
         "max_hp": e_hp_boss,
-        "atk": 10,
-        "def": 3,
+        "atk": 20,
+        "def": 6,
         "img": b_info["img"],
         "is_boss": True,
     }
@@ -199,13 +199,13 @@ def generate_enemies():
         })
   else:
     # ステージ2以降は従来通りの高倍率な強化スケーリングを適用
-    e_hp_boss = 130 + (stage-1) * 150
+    e_hp_boss = 100 + (stage-1) * 120
     boss_obj = {
         "name": f"{b_info['name']} Lv.{stage}",
         "hp": e_hp_boss,
         "max_hp": e_hp_boss,
-        "atk": 25 + (stage-1) * 20,
-        "def": 12 + (stage-1) * 5,
+        "atk": 20 + (stage-1) * 15,
+        "def": 6 + (stage-1) * 5,
         "img": b_info["img"],
         "is_boss": True,
     }
