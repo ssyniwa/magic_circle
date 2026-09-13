@@ -524,16 +524,13 @@ elif st.session_state.phase == "battle":
       w_img = load_image(w["weapon_img"], width=200) if w else None
       c_img = load_image(w["circle_img"], width=200) if w else None
 
-      st.markdown(f"<div class='card'>", unsafe_allow_html=True)
-      pc1, pc2, pc3, pc4 = st.columns([1, 1, 1, 2])
+      
+      pc1, pc3, pc4 = st.columns([1, 1, 2])
       with pc1:
         if p_img:
           st.image(p_img, width=200)
         else:
           st.write("👤")
-      with pc2:
-        if c_img:
-          st.image(c_img, width=120, caption="陣")
       with pc3:
         if w_img:
           st.image(w_img, width=120, caption="武")
@@ -561,15 +558,14 @@ elif st.session_state.phase == "battle":
           with grid_cols[c]:
             hp_ratio = max(0.0, min(1.0, e["hp"] / e["max_hp"] if e["max_hp"] > 0 else 0.0))
             card_class = "boss-card" if e.get("is_boss") else "enemy-card"
-            st.markdown(f"<div class='{card_class}'>", unsafe_allow_html=True)
             
-            e_img = load_image(e["img"], width=100)
+            
+            e_img = load_image(e["img"], width=200)
             if e_img:
-              st.image(e_img, width=100)
+              st.image(e_img, width=200)
             
             if e["hp"] > 0:
               boss_tag = "👑 **[BOSS]**<br>" if e.get("is_boss") else ""
-              st.markdown(f"{boss_tag}<b>{e['name']}</b>", unsafe_allow_html=True)
               st.progress(hp_ratio, text=f"{max(0, e['hp'])}/{e['max_hp']}")
             else:
               st.markdown(f"~~{e['name']}~~<br><b>【撃破】</b>", unsafe_allow_html=True)
