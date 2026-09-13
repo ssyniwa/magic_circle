@@ -170,33 +170,60 @@ def generate_enemies():
 
   b_info = boss_data_list[(stage - 1) % len(boss_data_list)]
   
-  # ステージごとのステータス上昇倍率をさらに大幅に強化
-  e_hp_boss = 150 + stage * 250
-  
-  boss_obj = {
-      "name": f"{b_info['name']} Lv.{stage}",
-      "hp": e_hp_boss,
-      "max_hp": e_hp_boss,
-      "atk": 25 + stage * 30,
-      "def": 12 + stage * 15,
-      "img": b_info["img"],
-      "is_boss": True,
-  }
+  # ステージ1のみ敵のステータスを大幅に低くしてサクサク進めるようにする
+  if stage == 1:
+    e_hp_boss = 130
+    boss_obj = {
+        "name": f"{b_info['name']} Lv.1",
+        "hp": e_hp_boss,
+        "max_hp": e_hp_boss,
+        "atk": 10,
+        "def": 3,
+        "img": b_info["img"],
+        "is_boss": True,
+    }
 
-  minions = []
-  m_pool = minion_data_pool[(stage - 1) % len(minion_data_pool)]
-  for m_template in m_pool:
-    for copy_idx in range(2):
-      e_hp_minion = 60 + stage * 120
-      minions.append({
-          "name": f"{m_template['name']} ({copy_idx+1})",
-          "hp": e_hp_minion,
-          "max_hp": e_hp_minion,
-          "atk": 16 + stage * 20,
-          "def": 6 + stage * 10,
-          "img": m_template["img"],
-          "is_boss": False,
-      })
+    minions = []
+    m_pool = minion_data_pool[0]
+    for m_template in m_pool:
+      for copy_idx in range(2):
+        e_hp_minion = 30
+        minions.append({
+            "name": f"{m_template['name']} ({copy_idx+1})",
+            "hp": e_hp_minion,
+            "max_hp": e_hp_minion,
+            "atk": 25,
+            "def": 12,
+            "img": m_template["img"],
+            "is_boss": False,
+        })
+  else:
+    # ステージ2以降は従来通りの高倍率な強化スケーリングを適用
+    e_hp_boss = 130 + (stage-1) * 250
+    boss_obj = {
+        "name": f"{b_info['name']} Lv.{stage}",
+        "hp": e_hp_boss,
+        "max_hp": e_hp_boss,
+        "atk": 25 + (stage-1) * 30,
+        "def": 12 + (stage-1) * 15,
+        "img": b_info["img"],
+        "is_boss": True,
+    }
+
+    minions = []
+    m_pool = minion_data_pool[(stage - 1) % len(minion_data_pool)]
+    for m_template in m_pool:
+      for copy_idx in range(2):
+        e_hp_minion = 60 + stage * 120
+        minions.append({
+            "name": f"{m_template['name']} ({copy_idx+1})",
+            "hp": e_hp_minion,
+            "max_hp": e_hp_minion,
+            "atk": 16 + stage * 20,
+            "def": 6 + stage * 10,
+            "img": m_template["img"],
+            "is_boss": False,
+        })
 
   all_stage_enemies = [boss_obj] + minions
   random.shuffle(all_stage_enemies)
