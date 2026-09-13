@@ -171,14 +171,14 @@ def generate_enemies():
   b_info = boss_data_list[(stage - 1) % len(boss_data_list)]
   
   # ステージごとのステータス上昇倍率を従来の2倍以上に設定
-  e_hp_boss = 120 + (stage - 1) * 120
+  e_hp_boss = 120 + (stage - 1) * 110
   
   boss_obj = {
       "name": f"{b_info['name']} Lv.{stage}",
       "hp": e_hp_boss,
       "max_hp": e_hp_boss,
-      "atk": 22 + (stage - 1) * 18,
-      "def": 10 + (stage - 1) * 10,
+      "atk": 22 + (stage - 1) * 16,
+      "def": 10 + (stage - 1) * 9,
       "img": b_info["img"],
       "is_boss": True,
   }
@@ -187,12 +187,12 @@ def generate_enemies():
   m_pool = minion_data_pool[(stage - 1) % len(minion_data_pool)]
   for m_template in m_pool:
     for copy_idx in range(2):
-      e_hp_minion = 50 + (stage - 1) * 70
+      e_hp_minion = 50 + (stage - 1) * 60
       minions.append({
           "name": f"{m_template['name']} ({copy_idx+1})",
           "hp": e_hp_minion,
           "max_hp": e_hp_minion,
-          "atk": 14 + (stage - 1) * 12,
+          "atk": 14 + (stage - 1) * 11,
           "def": 5 + (stage - 1) * 6,
           "img": m_template["img"],
           "is_boss": False,
