@@ -196,7 +196,7 @@ def generate_enemies():
           "hp": e_hp_minion,
           "max_hp": e_hp_minion,
           "atk": 14 + (stage - 1) * 15,
-          "def": 5 + (stage - 1) * 10,
+          "def": 5 + (stage - 1) * 9,
           "img": m_template["img"],
           "is_boss": False,
       })
