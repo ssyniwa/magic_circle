@@ -444,7 +444,7 @@ elif st.session_state.phase == "equip":
 
   for idx, p in enumerate(st.session_state.players):
     with cols[idx]:
-      st.markdown(f"<div class='card'>", unsafe_allow_html=True)
+      
       p_img = load_image(p["img"], width=200)
       if p_img:
         st.image(p_img, width=200)
@@ -533,7 +533,7 @@ elif st.session_state.phase == "battle":
           st.write("👤")
       with pc3:
         if w_img:
-          st.image(w_img, width=120, caption="武")
+          st.image(w_img, width=150)
       with pc4:
         w_type = w["type"] if w else ""
         st.markdown(
