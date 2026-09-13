@@ -174,7 +174,7 @@ def generate_enemies():
   b_info = boss_data_list[(stage - 1) % len(boss_data_list)]
   
   # ステージごとのステータス上昇倍率を従来の2倍以上に設定
-  e_hp_boss = 120 + (stage - 1) * 105
+  e_hp_boss = 120 + (stage - 1) * 110
   
   boss_obj = {
       "name": f"{b_info['name']} Lv.{stage}",
