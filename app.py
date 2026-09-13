@@ -180,8 +180,8 @@ def generate_enemies():
       "name": f"{b_info['name']} Lv.{stage}",
       "hp": e_hp_boss,
       "max_hp": e_hp_boss,
-      "atk": 22 + (stage - 1) * 20,
-      "def": 10 + (stage - 1) * 13,
+      "atk": 22 + (stage - 1) * 19,
+      "def": 10 + (stage - 1) * 12,
       "img": b_info["img"],
       "is_boss": True,
   }
