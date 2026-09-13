@@ -195,7 +195,7 @@ def generate_enemies():
           "name": f"{m_template['name']} ({copy_idx+1})",
           "hp": e_hp_minion,
           "max_hp": e_hp_minion,
-          "atk": 14 + (stage - 1) * 15,
+          "atk": 14 + (stage - 1) * 14,
           "def": 5 + (stage - 1) * 9,
           "img": m_template["img"],
           "is_boss": False,
