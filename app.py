@@ -334,16 +334,22 @@ if st.session_state.phase == "generate":
     ):
       crafted = []
       for raw in [raw_w1, raw_w2, raw_w3]:
-        rand_stat = random.choice(STATS)
-        base_val = random.randint(5, 15)
-        val = int(base_val * LEVEL_MULTIPLIERS[raw["level"]])
+        # 全ステータスに対して初期ボーナス値をランダム設定
+        base_vals = {
+            "HP": random.randint(10, 25),
+            "攻撃力": random.randint(3, 8),
+            "防御力": random.randint(2, 6),
+            "回復力": random.randint(2, 6),
+        }
+        stats_val = {
+            k: int(v * LEVEL_MULTIPLIERS[raw["level"]]) for k, v in base_vals.items()
+        }
 
         crafted.append({
             "name": f"{raw['a1']}・{raw['a2']}の{raw['level']}{raw['type']}",
             "type": raw["type"],
             "level": raw["level"],
-            "stat": rand_stat,
-            "value": val,
+            "stats_bonus": stats_val,  # 全ステータスのボーナスを保持
             "circle_img": raw["circle_img"],
             "weapon_img": raw["weapon_img"],
         })
@@ -351,7 +357,6 @@ if st.session_state.phase == "generate":
       st.session_state.crafted_weapons = crafted
       st.session_state.phase = "equip"
       st.rerun()
-
   else:
     st.subheader(f"🛠️ ステージ {st.session_state.stage}：武器レベルアップフェーズ")
     st.write(
@@ -359,10 +364,13 @@ if st.session_state.phase == "generate":
     )
 
     weapons = st.session_state.crafted_weapons
-    weapon_options = {
-        f"{w['name']} (Lv:{w['level']} / 効果:{w['stat']}+{w['value']})": i
-        for i, w in enumerate(weapons)
-    }
+    
+    # 選択肢の表示用テキストに全ステータスボーナスを含める
+    weapon_options = {}
+    for i, w in enumerate(weapons):
+      bonus_str = " / ".join([f"{k}:+{v}" for k, v in w["stats_bonus"].items()])
+      desc = f"{w['name']} (Lv:{w['level']} | {bonus_str})"
+      weapon_options[desc] = i
 
     selected_desc = st.selectbox(
         "レベルアップさせる武器を選択", list(weapon_options.keys())
@@ -386,9 +394,17 @@ if st.session_state.phase == "generate":
 
     if st.button("⬆️ 武器のレベルを1段階上げる", type="primary"):
       if next_lvl != current_lvl:
+        # 現在の倍率からベース値を逆算し、新レベルの倍率で全ステータスを再計算
+        old_mult = LEVEL_MULTIPLIERS[current_lvl]
+        new_mult = LEVEL_MULTIPLIERS[next_lvl]
+        
+        new_stats_bonus = {}
+        for k, v in target_weapon["stats_bonus"].items():
+          base_val = v / old_mult
+          new_stats_bonus[k] = int(base_val * new_mult)
+        
+        target_weapon["stats_bonus"] = new_stats_bonus
         target_weapon["level"] = next_lvl
-        base_val = target_weapon["value"] / LEVEL_MULTIPLIERS[current_lvl]
-        target_weapon["value"] = int(base_val * LEVEL_MULTIPLIERS[next_lvl])
 
         parts_name = target_weapon["name"].split("の")
         attrs = parts_name[0]
@@ -468,8 +484,10 @@ elif st.session_state.phase == "equip":
         if w_img:
           st.image(w_img, width=200, caption="武器")
 
+      # カード内の効果表示部分
+      bonus_display = "<br>".join([f"🔮 {k} +{v}" for k, v in chosen_weapon['stats_bonus'].items()])
       st.markdown(
-          f"<small><b>{chosen_weapon['name']}</b><br>🔮効果: {chosen_weapon['stat']} +{chosen_weapon['value']}</small>",
+          f"<small><b>{chosen_weapon['name']}</b><br>{bonus_display}</small>",
           unsafe_allow_html=True,
       )
       st.markdown("</div>", unsafe_allow_html=True)
@@ -478,21 +496,17 @@ elif st.session_state.phase == "equip":
     for i, p in enumerate(st.session_state.players):
       w = assigned_weapons[i]
       p["weapon"] = w
-      if w["stat"] == "HP":
-        p["max_hp"] += w["value"] * 4
-        p["hp"] = p["max_hp"]
-      elif w["stat"] == "攻撃力":
-        p["atk"] += w["value"]
-      elif w["stat"] == "防御力":
-        p["def"] += w["value"]
-      elif w["stat"] == "回復力":
-        p["rec"] += w["value"]
+      # すべてのステータスボーナスをキャラクターに加算
+      p["max_hp"] += w["stats_bonus"]["HP"] * 4
+      p["hp"] = p["max_hp"]
+      p["atk"] += w["stats_bonus"]["攻撃力"]
+      p["def"] += w["stats_bonus"]["防御力"]
+      p["rec"] += w["stats_bonus"]["回復力"]
 
     generate_enemies()
     st.session_state.phase = "battle"
     st.session_state.battle_log = ["⚔️ バトルが開始されました！ ステージボスと部下が3×3グリッドに配置された！"]
     st.rerun()
-
 # ==========================================
 # フェーズ 3: バトルフェーズ (プレイヤー vs 3x3グリッドエネミー)
 # ==========================================
