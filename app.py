@@ -17,7 +17,7 @@ STATS = ["HP", "攻撃力", "防御力", "回復力"]
 
 
 # 画像読み込み補助関数 (.jpg対応)
-def load_image(path, width=80):
+def load_image(path, width=200):
   if os.path.exists(path):
     try:
       return Image.open(path)
@@ -536,7 +536,7 @@ elif st.session_state.phase == "battle":
           st.write("👤")
       with pc3:
         if w_img:
-          st.image(w_img, width=150)
+          st.image(w_img, width=200)
       with pc4:
         w_type = w["type"] if w else ""
         st.markdown(
