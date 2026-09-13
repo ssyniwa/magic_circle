@@ -525,7 +525,7 @@ elif st.session_state.phase == "battle":
       c_img = load_image(w["circle_img"], width=200) if w else None
 
       
-      pc1, pc3, pc4 = st.columns([1, 1, 2])
+      pc1, pc3, pc4 = st.columns([1, 1, 1])
       with pc1:
         if p_img:
           st.image(p_img, width=200)
@@ -561,9 +561,9 @@ elif st.session_state.phase == "battle":
             card_class = "boss-card" if e.get("is_boss") else "enemy-card"
             
             
-            e_img = load_image(e["img"], width=200)
+            e_img = load_image(e["img"], width=150)
             if e_img:
-              st.image(e_img, width=200)
+              st.image(e_img, width=150)
             
             if e["hp"] > 0:
               boss_tag = "👑 **[BOSS]**<br>" if e.get("is_boss") else ""
