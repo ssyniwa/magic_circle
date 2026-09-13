@@ -525,24 +525,25 @@ elif st.session_state.phase == "battle":
       c_img = load_image(w["circle_img"], width=200) if w else None
 
       
-      pc1, pc3, pc4 = st.columns([1, 1, 1])
+      pc1, pc3 = st.columns([1, 1])
       with pc1:
         if p_img:
           st.image(p_img, width=200)
           st.progress(
             hp_ratio, text=f"HP: {max(0, p['hp'])} / {p['max_hp']}"
           )
+          w_type = w["type"] if w else ""
+          st.markdown(
+              f"**{p['name']}** <small>({w_type})</small><br><small>{w['name'] if w else ''}</small>",
+              unsafe_allow_html=True,
+          )
         else:
           st.write("👤")
       with pc3:
         if w_img:
           st.image(w_img, width=200)
-      with pc4:
-        w_type = w["type"] if w else ""
-        st.markdown(
-            f"**{p['name']}** <small>({w_type})</small><br><small>{w['name'] if w else ''}</small>",
-            unsafe_allow_html=True,
-        )
+      
+        
         
       st.markdown("</div>", unsafe_allow_html=True)
 
