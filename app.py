@@ -449,7 +449,6 @@ elif st.session_state.phase == "equip":
       chosen_weapon = weapon_options[selected_w_name]
       assigned_weapons.append(chosen_weapon)
 
-      # 武器タイプに応じた射程範囲の説明を表示
       w_type = chosen_weapon["type"]
       range_desc = {
           "剣": "前衛単体（指定した1体）",
@@ -513,7 +512,6 @@ elif st.session_state.phase == "battle":
         w_type = w["type"] if w else "剣"
         with select_cols[p_idx]:
           if w_type == "剣":
-            # 生存している敵の中から1体を選択
             active_enemy_options = {st.session_state.enemies[i]["name"]: i for i in living_indices}
             chosen_name = st.selectbox(
                 f"{p['name']} (剣) のターゲット",
@@ -522,7 +520,6 @@ elif st.session_state.phase == "battle":
             )
             manual_targets[p_idx] = [active_enemy_options[chosen_name]]
           elif w_type == "槍":
-            # 生存している列（0列目、1列目、2列目）を選択
             cols_available = {}
             for col_idx in range(3):
               col_members = [col_idx, col_idx + 3, col_idx + 6]
@@ -609,7 +606,8 @@ elif st.session_state.phase == "battle":
 
   st.markdown("---")
 
-  if st.button("⚔️ ターン進行 (攻撃＆回復)", type="primary"):
+  # 2. ターン進行を明示的なボタン押下時のみに修正
+  if st.button("⚔️ ターゲットを決定してターン進行 (攻撃＆回復)", type="primary"):
     logs = []
     enemies = st.session_state.enemies
 
@@ -626,10 +624,8 @@ elif st.session_state.phase == "battle":
           continue
 
         if w_type in ["剣", "槍"] and p_idx in manual_targets:
-          # 手動選択されたターゲットを反映（ただし敵がすでに生存している場合のみ）
           target_indices = [t for t in manual_targets[p_idx] if enemies[t]["hp"] > 0]
           if not target_indices:
-            # 万が一選択対象が倒されていた場合はランダム等にフォールバック
             if w_type == "剣":
               target_indices = [random.choice(living_indices)]
             else:
@@ -685,7 +681,6 @@ elif st.session_state.phase == "battle":
 
     st.session_state.battle_log.extend(logs)
 
-    # 敵が全員（9体）倒れたらステージクリア（または次ステージへ）の判定
     all_enemies_dead = all(e["hp"] <= 0 for e in enemies)
     all_players_dead = all(p["hp"] <= 0 for p in st.session_state.players)
 
