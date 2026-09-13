@@ -500,13 +500,57 @@ elif st.session_state.phase == "equip":
 elif st.session_state.phase == "battle":
   st.subheader("⚔️ バトルフェーズ (3×3グリッド戦)")
 
+  # 1. ターン開始前のターゲット選択UI
+  st.markdown("#### 🎯 攻撃対象の手動選択（剣・槍の装備キャラ）")
+  manual_targets = {}
+  living_indices = [i for i, e in enumerate(st.session_state.enemies) if e["hp"] > 0]
+  
+  if living_indices:
+    select_cols = st.columns(len(st.session_state.players))
+    for p_idx, p in enumerate(st.session_state.players):
+      if p["hp"] > 0:
+        w = p["weapon"]
+        w_type = w["type"] if w else "剣"
+        with select_cols[p_idx]:
+          if w_type == "剣":
+            # 生存している敵の中から1体を選択
+            active_enemy_options = {st.session_state.enemies[i]["name"]: i for i in living_indices}
+            chosen_name = st.selectbox(
+                f"{p['name']} (剣) のターゲット",
+                list(active_enemy_options.keys()),
+                key=f"target_sword_{p_idx}"
+            )
+            manual_targets[p_idx] = [active_enemy_options[chosen_name]]
+          elif w_type == "槍":
+            # 生存している列（0列目、1列目、2列目）を選択
+            cols_available = {}
+            for col_idx in range(3):
+              col_members = [col_idx, col_idx + 3, col_idx + 6]
+              col_living = [m for m in col_members if st.session_state.enemies[m]["hp"] > 0]
+              if col_living:
+                col_name = f"縦列 {col_idx + 1} (包含: {', '.join([st.session_state.enemies[m]['name'] for m in col_living])})"
+                cols_available[col_name] = col_living
+            
+            if cols_available:
+              chosen_col_name = st.selectbox(
+                  f"{p['name']} (槍) の攻撃列",
+                  list(cols_available.keys()),
+                  key=f"target_spear_{p_idx}"
+              )
+              manual_targets[p_idx] = cols_available[chosen_col_name]
+            else:
+              manual_targets[p_idx] = []
+          else:
+            st.write(f"**{p['name']} ({w_type})**: 自動対象選択")
+
+  st.markdown("---")
+
   col_p, col_e = st.columns([1, 1])
 
   with col_p:
     st.markdown("### 🔵 プレイヤーチーム")
     for p in st.session_state.players:
       p_img = load_image(p["img"], width=200)
-      # HPプログレスバーの値が 0.0〜1.0 の範囲に正しく収まるようにクランプ
       hp_ratio = max(0.0, min(1.0, p["hp"] / p["max_hp"] if p["max_hp"] > 0 else 0.0))
       w = p["weapon"]
       w_img = load_image(w["weapon_img"], width=200) if w else None
@@ -547,7 +591,6 @@ elif st.session_state.phase == "battle":
         if idx < len(enemies):
           e = enemies[idx]
           with grid_cols[c]:
-            # HPプログレスバーの値が 0.0〜1.0 の範囲に正しく収まるようにクランプ
             hp_ratio = max(0.0, min(1.0, e["hp"] / e["max_hp"] if e["max_hp"] > 0 else 0.0))
             card_class = "boss-card" if e.get("is_boss") else "enemy-card"
             st.markdown(f"<div class='{card_class}'>", unsafe_allow_html=True)
@@ -570,8 +613,8 @@ elif st.session_state.phase == "battle":
     logs = []
     enemies = st.session_state.enemies
 
-    # プレイヤーの攻撃処理（武器の射程範囲に基づく）
-    for p in st.session_state.players:
+    # プレイヤーの攻撃処理（手動選択または武器種に応じた処理）
+    for p_idx, p in enumerate(st.session_state.players):
       if p["hp"] > 0:
         w = p["weapon"]
         w_type = w["type"] if w else "剣"
@@ -582,24 +625,34 @@ elif st.session_state.phase == "battle":
         if not living_indices:
           continue
 
-        if w_type == "剣":
-          target_indices = [random.choice(living_indices)]
-        elif w_type == "槍":
-          cols_available = []
-          for col_idx in range(3):
-            col_members = [col_idx, col_idx + 3, col_idx + 6]
-            if any(enemies[m]["hp"] > 0 for m in col_members):
-              cols_available.append(col_members)
-          if cols_available:
-            chosen_col = random.choice(cols_available)
-            target_indices = [m for m in chosen_col if enemies[m]["hp"] > 0]
-          else:
+        if w_type in ["剣", "槍"] and p_idx in manual_targets:
+          # 手動選択されたターゲットを反映（ただし敵がすでに生存している場合のみ）
+          target_indices = [t for t in manual_targets[p_idx] if enemies[t]["hp"] > 0]
+          if not target_indices:
+            # 万が一選択対象が倒されていた場合はランダム等にフォールバック
+            if w_type == "剣":
+              target_indices = [random.choice(living_indices)]
+            else:
+              target_indices = living_indices[:1]
+        else:
+          if w_type == "剣":
             target_indices = [random.choice(living_indices)]
-        elif w_type == "弓":
-          count = min(3, len(living_indices))
-          target_indices = random.sample(living_indices, count)
-        elif w_type == "杖":
-          target_indices = living_indices
+          elif w_type == "槍":
+            cols_available = []
+            for col_idx in range(3):
+              col_members = [col_idx, col_idx + 3, col_idx + 6]
+              if any(enemies[m]["hp"] > 0 for m in col_members):
+                cols_available.append(col_members)
+            if cols_available:
+              chosen_col = random.choice(cols_available)
+              target_indices = [m for m in chosen_col if enemies[m]["hp"] > 0]
+            else:
+              target_indices = [random.choice(living_indices)]
+          elif w_type == "弓":
+            count = min(3, len(living_indices))
+            target_indices = random.sample(living_indices, count)
+          elif w_type == "杖":
+            target_indices = living_indices
 
         for t_idx in target_indices:
           target = enemies[t_idx]
@@ -632,7 +685,7 @@ elif st.session_state.phase == "battle":
 
     st.session_state.battle_log.extend(logs)
 
-    # 敵が全員倒れたらステージクリア（または次ステージへ）の判定
+    # 敵が全員（9体）倒れたらステージクリア（または次ステージへ）の判定
     all_enemies_dead = all(e["hp"] <= 0 for e in enemies)
     all_players_dead = all(p["hp"] <= 0 for p in st.session_state.players)
 
