@@ -499,49 +499,6 @@ elif st.session_state.phase == "equip":
 elif st.session_state.phase == "battle":
   st.subheader("⚔️ バトルフェーズ (3×3グリッド戦)")
 
-  # 1. ターン開始前のターゲット選択UI
-  st.markdown("#### 🎯 攻撃対象の手動選択（剣・槍の装備キャラ）")
-  manual_targets = {}
-  living_indices = [i for i, e in enumerate(st.session_state.enemies) if e["hp"] > 0]
-  
-  if living_indices:
-    select_cols = st.columns(len(st.session_state.players))
-    for p_idx, p in enumerate(st.session_state.players):
-      if p["hp"] > 0:
-        w = p["weapon"]
-        w_type = w["type"] if w else "剣"
-        with select_cols[p_idx]:
-          if w_type == "剣":
-            active_enemy_options = {st.session_state.enemies[i]["name"]: i for i in living_indices}
-            chosen_name = st.selectbox(
-                f"{p['name']} (剣) のターゲット",
-                list(active_enemy_options.keys()),
-                key=f"target_sword_{p_idx}"
-            )
-            manual_targets[p_idx] = [active_enemy_options[chosen_name]]
-          elif w_type == "槍":
-            cols_available = {}
-            for col_idx in range(3):
-              col_members = [col_idx, col_idx + 3, col_idx + 6]
-              col_living = [m for m in col_members if st.session_state.enemies[m]["hp"] > 0]
-              if col_living:
-                col_name = f"縦列 {col_idx + 1} (包含: {', '.join([st.session_state.enemies[m]['name'] for m in col_living])})"
-                cols_available[col_name] = col_living
-            
-            if cols_available:
-              chosen_col_name = st.selectbox(
-                  f"{p['name']} (槍) の攻撃列",
-                  list(cols_available.keys()),
-                  key=f"target_spear_{p_idx}"
-              )
-              manual_targets[p_idx] = cols_available[chosen_col_name]
-            else:
-              manual_targets[p_idx] = []
-          else:
-            st.write(f"**{p['name']} ({w_type})**: 自動対象選択")
-
-  st.markdown("---")
-
   col_p, col_e = st.columns([1, 1])
 
   with col_p:
@@ -606,8 +563,53 @@ elif st.session_state.phase == "battle":
 
   st.markdown("---")
 
-  # 2. ターン進行を明示的なボタン押下時のみに修正
-  if st.button("⚔️ ターゲットを決定してターン進行 (攻撃＆回復)", type="primary"):
+  # st.formを用いることで、フォーム内のプルダウン変更では再描画（ターン進行）せず、
+  # 「ターンを進行する」ボタンを押した時のみ値が送信されて処理が走るようになります。
+  with st.form(key="battle_form"):
+    st.markdown("#### 🎯 攻撃対象の手動選択（剣・槍の装備キャラ）")
+    manual_targets = {}
+    living_indices = [i for i, e in enumerate(st.session_state.enemies) if e["hp"] > 0]
+    
+    if living_indices:
+      select_cols = st.columns(len(st.session_state.players))
+      for p_idx, p in enumerate(st.session_state.players):
+        if p["hp"] > 0:
+          w = p["weapon"]
+          w_type = w["type"] if w else "剣"
+          with select_cols[p_idx]:
+            if w_type == "剣":
+              active_enemy_options = {st.session_state.enemies[i]["name"]: i for i in living_indices}
+              chosen_name = st.selectbox(
+                  f"{p['name']} (剣) のターゲット",
+                  list(active_enemy_options.keys()),
+                  key=f"target_sword_{p_idx}"
+              )
+              manual_targets[p_idx] = [active_enemy_options[chosen_name]]
+            elif w_type == "槍":
+              cols_available = {}
+              for col_idx in range(3):
+                col_members = [col_idx, col_idx + 3, col_idx + 6]
+                col_living = [m for m in col_members if st.session_state.enemies[m]["hp"] > 0]
+                if col_living:
+                  col_name = f"縦列 {col_idx + 1} (包含: {', '.join([st.session_state.enemies[m]['name'] for m in col_living])})"
+                  cols_available[col_name] = col_living
+              
+              if cols_available:
+                chosen_col_name = st.selectbox(
+                    f"{p['name']} (槍) の攻撃列",
+                    list(cols_available.keys()),
+                    key=f"target_spear_{p_idx}"
+                )
+                manual_targets[p_idx] = cols_available[chosen_col_name]
+              else:
+                manual_targets[p_idx] = []
+            else:
+              st.write(f"**{p['name']} ({w_type})**: 自動対象選択")
+
+    st.markdown("---")
+    submit_button = st.form_submit_button("⚔️ ターゲットを決定してターン進行 (攻撃＆回復)", type="primary")
+
+  if submit_button:
     logs = []
     enemies = st.session_state.enemies
 
@@ -696,13 +698,14 @@ elif st.session_state.phase == "battle":
     elif all_players_dead:
       st.session_state.phase = "gameover"
       st.rerun()
+    else:
+      st.rerun()
 
   st.markdown("### 📜 戦闘ログ")
   log_container = st.container(height=200)
   with log_container:
     for log in reversed(st.session_state.battle_log[-12:]):
       st.text(log)
-
 # ==========================================
 # ゲームオーバー画面
 # ==========================================
