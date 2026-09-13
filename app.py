@@ -183,7 +183,6 @@ def generate_enemies():
 
   minions = []
   m_pool = minion_data_pool[(stage - 1) % len(minion_data_pool)]
-  # 4種類の部下をそれぞれ2体ずつ生成（計8体）
   for m_template in m_pool:
     for copy_idx in range(2):
       e_hp_minion = 50 + stage * 20
@@ -197,7 +196,6 @@ def generate_enemies():
           "is_boss": False,
       })
 
-  # ボス1体と部下8体を合わせた計9体をリストにしてシャッフル（3x3グリッドへランダム配置）
   all_stage_enemies = [boss_obj] + minions
   random.shuffle(all_stage_enemies)
   
@@ -508,7 +506,8 @@ elif st.session_state.phase == "battle":
     st.markdown("### 🔵 プレイヤーチーム")
     for p in st.session_state.players:
       p_img = load_image(p["img"], width=200)
-      hp_ratio = max(0, min(1, p["hp"] / p["max_hp"]))
+      # HPプログレスバーの値が 0.0〜1.0 の範囲に正しく収まるようにクランプ
+      hp_ratio = max(0.0, min(1.0, p["hp"] / p["max_hp"] if p["max_hp"] > 0 else 0.0))
       w = p["weapon"]
       w_img = load_image(w["weapon_img"], width=200) if w else None
       c_img = load_image(w["circle_img"], width=200) if w else None
@@ -540,7 +539,6 @@ elif st.session_state.phase == "battle":
   with col_e:
     st.markdown("### 🔴 エネミーチーム (3×3グリッド配置)")
     
-    # 3x3 グリッドを描画（ボス1体＋部下8体がランダム配置されたエネミーリストを表示）
     enemies = st.session_state.enemies
     for r in range(3):
       grid_cols = st.columns(3)
@@ -549,11 +547,11 @@ elif st.session_state.phase == "battle":
         if idx < len(enemies):
           e = enemies[idx]
           with grid_cols[c]:
-            hp_ratio = max(0, min(1, e["hp"] / e["max_hp"]))
+            # HPプログレスバーの値が 0.0〜1.0 の範囲に正しく収まるようにクランプ
+            hp_ratio = max(0.0, min(1.0, e["hp"] / e["max_hp"] if e["max_hp"] > 0 else 0.0))
             card_class = "boss-card" if e.get("is_boss") else "enemy-card"
             st.markdown(f"<div class='{card_class}'>", unsafe_allow_html=True)
             
-            # 敵の個別画像を表示
             e_img = load_image(e["img"], width=100)
             if e_img:
               st.image(e_img, width=100)
@@ -634,6 +632,7 @@ elif st.session_state.phase == "battle":
 
     st.session_state.battle_log.extend(logs)
 
+    # 敵が全員倒れたらステージクリア（または次ステージへ）の判定
     all_enemies_dead = all(e["hp"] <= 0 for e in enemies)
     all_players_dead = all(p["hp"] <= 0 for p in st.session_state.players)
 
