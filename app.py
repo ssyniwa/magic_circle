@@ -470,7 +470,7 @@ elif st.session_state.phase == "equip":
           "剣": "前衛単体（指定した1体）",
           "槍": "縦一列（3体）",
           "弓": "ランダム3体",
-          "杖": "全体（9体すべて）"
+          "杖": "ランダム5体"
       }.get(w_type, "単体")
       st.info(f"🎯 射程範囲: **{range_desc}**")
 
@@ -664,7 +664,8 @@ elif st.session_state.phase == "battle":
             count = min(3, len(living_indices))
             target_indices = random.sample(living_indices, count)
           elif w_type == "杖":
-            target_indices = living_indices
+            count = min(5, len(living_indices))
+            target_indices = random.sample(living_indices, count)
 
         for t_idx in target_indices:
           target = enemies[t_idx]
