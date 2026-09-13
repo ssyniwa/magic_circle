@@ -561,9 +561,9 @@ elif st.session_state.phase == "battle":
             card_class = "boss-card" if e.get("is_boss") else "enemy-card"
             
             
-            e_img = load_image(e["img"], width=150)
+            e_img = load_image(e["img"], width=200)
             if e_img:
-              st.image(e_img, width=150)
+              st.image(e_img, width=200)
             
             if e["hp"] > 0:
               boss_tag = "👑 **[BOSS]**<br>" if e.get("is_boss") else ""
