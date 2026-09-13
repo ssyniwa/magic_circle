@@ -446,9 +446,9 @@ elif st.session_state.phase == "equip":
   for idx, p in enumerate(st.session_state.players):
     with cols[idx]:
       
-      p_img = load_image(p["img"], width=200)
+      p_img = load_image(p["img"], width=300)
       if p_img:
-        st.image(p_img, width=200)
+        st.image(p_img, width=300)
       else:
         st.markdown(f"### 🛡️ {p['name']}")
 
