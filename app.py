@@ -498,7 +498,14 @@ elif st.session_state.phase == "equip":
       )
       st.markdown("</div>", unsafe_allow_html=True)
 
-  if st.button("🚀 バトルフェーズへ突入！", type="primary"):
+  # 武器の重複チェック
+  chosen_weapon_names = [w["name"] for w in assigned_weapons]
+  has_duplicate = len(chosen_weapon_names) != len(set(chosen_weapon_names))
+
+  if has_duplicate:
+    st.warning("⚠️ 警告: 同じ武器を複数のキャラクターに重複して装備させることはできません。それぞれ異なる武器を選択してください。")
+
+  if st.button("🚀 バトルフェーズへ突入！", type="primary", disabled=has_duplicate):
     log_messages = ["⚔️ バトルが開始されました！ ステージボスと部下が3×3グリッドに配置された！"]
     for i, p in enumerate(st.session_state.players):
       w = assigned_weapons[i]
