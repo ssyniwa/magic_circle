@@ -560,11 +560,11 @@ elif st.session_state.phase == "battle":
             hp_ratio = max(0.0, min(1.0, e["hp"] / e["max_hp"] if e["max_hp"] > 0 else 0.0))
             card_class = "boss-card" if e.get("is_boss") else "enemy-card"
             
-            
+            st.markdown(f"<div class='{card_class}'>", unsafe_allow_html=True)
             e_img = load_image(e["img"], width=200)
             if e_img:
               st.image(e_img, width=200)
-              st.markdown(f"<div class='{card_class}'>", unsafe_allow_html=True)
+              
   
             if e["hp"] > 0:
               boss_tag = "👑 **[BOSS]**<br>" if e.get("is_boss") else ""
